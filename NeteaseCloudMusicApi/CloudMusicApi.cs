@@ -138,7 +138,6 @@ namespace NeteaseCloudMusicApi {
 			return (isOk, json);
 		}
 
-
 		/// <summary />
 		public void Dispose() {
 			if (_isDisposed)
