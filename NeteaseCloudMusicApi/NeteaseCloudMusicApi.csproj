@@ -9,7 +9,8 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <AssemblyOriginatorKeyFile>../NeteaseCloudMusicApi.snk</AssemblyOriginatorKeyFile>
     <SignAssembly>true</SignAssembly>
-		<NoWarn>IDE1006;CS0436;CS3021</NoWarn>
+    <NoWarn>IDE1006;CS0436;CS3021</NoWarn>
+    <LangVersion>7.3</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
