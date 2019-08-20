@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Title>NeteaseCloudMusicApi</Title>
+    <Product>NeteaseCloudMusicApi</Product>
+    <Copyright>Copyright © 2019 Binaryify / Wwh</Copyright>
+    <AssemblyVersion>3.21.0.0</AssemblyVersion>
+    <FileVersion>3.21.0.0</FileVersion>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <AssemblyOriginatorKeyFile>../NeteaseCloudMusicApi.snk</AssemblyOriginatorKeyFile>
+    <SignAssembly>true</SignAssembly>
+		<NoWarn>IDE1006;CS0436;CS3021</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
+    <PackageReference Include="System.Memory" Version="4.5.3" />
+  </ItemGroup>
+</Project>
