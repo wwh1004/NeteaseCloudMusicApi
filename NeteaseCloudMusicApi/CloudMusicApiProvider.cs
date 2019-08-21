@@ -199,7 +199,7 @@ namespace NeteaseCloudMusicApi {
 		}, BuildOptions("weapi"));
 
 		/// <summary>
-		/// 获取歌手 mv TODO: 等nodejs版的更新
+		/// 获取歌手 mv
 		/// </summary>
 		public static readonly CloudMusicApiProvider ArtistMv = new CloudMusicApiProvider("/artist/mv", HttpMethod.Post, q => "https://music.163.com/weapi/artist/mvs", new ParameterInfo[] {
 			new ParameterInfo("id", ParameterType.Required, null) { KeyAlias = "artistId" },
@@ -372,7 +372,7 @@ namespace NeteaseCloudMusicApi {
 		}, BuildOptions("weapi"));
 
 		/// <summary>
-		/// 未知 TODO
+		/// 电台banner
 		/// </summary>
 		public static readonly CloudMusicApiProvider DjBanner = new CloudMusicApiProvider("/dj/banner", HttpMethod.Post, q => "http://music.163.com/weapi/djradio/banner/get", Array.Empty<ParameterInfo>(), BuildOptions("weapi"));
 
@@ -399,16 +399,11 @@ namespace NeteaseCloudMusicApi {
 		}, BuildOptions("weapi"));
 
 		/// <summary>
-		/// 未知 TODO
+		/// 热门电台
 		/// </summary>
 		public static readonly CloudMusicApiProvider DjHot = new CloudMusicApiProvider("/dj/hot", HttpMethod.Post, q => "https://music.163.com/weapi/djradio/hot/v1", new ParameterInfo[] {
-			new ParameterInfo("type", ParameterType.Required, null) { KeyAlias = "cat" },
-			new ParameterInfo("type", ParameterType.Required, null) { KeyAlias = "cateId" },
-			new ParameterInfo("type", ParameterType.Required, null),
-			new ParameterInfo("type", ParameterType.Required, null) { KeyAlias = "categoryId" },
-			new ParameterInfo("type", ParameterType.Required, null) { KeyAlias = "category" },
-			new ParameterInfo("limit", ParameterType.Required, null),
-			new ParameterInfo("offset", ParameterType.Required, null)
+			new ParameterInfo("limit", ParameterType.Optional, "30"),
+			new ParameterInfo("offset", ParameterType.Optional, "0")
 		}, BuildOptions("weapi"));
 
 		/// <summary>
@@ -430,7 +425,7 @@ namespace NeteaseCloudMusicApi {
 		}, BuildOptions("weapi"));
 
 		/// <summary>
-		/// 未知 TODO
+		/// 电台 - 节目详情
 		/// </summary>
 		public static readonly CloudMusicApiProvider DjProgramDetail = new CloudMusicApiProvider("/dj/program/detail", HttpMethod.Post, q => "https://music.163.com/weapi/dj/program/detail", new ParameterInfo[] {
 			new ParameterInfo("id", ParameterType.Required, null)
@@ -544,7 +539,7 @@ namespace NeteaseCloudMusicApi {
 		/// </summary>
 		public static readonly CloudMusicApiProvider LoginCellphone = new CloudMusicApiProvider("/login/cellphone", HttpMethod.Post, q => "https://music.163.com/weapi/login/cellphone", new ParameterInfo[] {
 			new ParameterInfo("phone", ParameterType.Required, null),
-			new ParameterInfo("countrycode", ParameterType.Optional, null),
+			new ParameterInfo("countrycode", ParameterType.Optional, string.Empty),
 			new ParameterInfo("password", t => t.ToByteArrayUtf8().ComputeMd5().ToHexStringLower(), ParameterType.Required, null),
 			new ParameterInfo("rememberLogin", ParameterType.Constant, "true")
 		}, BuildOptions("weapi", new Cookie[] { new Cookie("os", "pc") }, "pc"));
@@ -719,7 +714,7 @@ namespace NeteaseCloudMusicApi {
 		/// </summary>
 		public static readonly CloudMusicApiProvider PlaylistCreate = new CloudMusicApiProvider("/playlist/create", HttpMethod.Post, q => "https://music.163.com/weapi/playlist/create", new ParameterInfo[] {
 			new ParameterInfo("name", ParameterType.Required, null),
-			new ParameterInfo("privacy", ParameterType.Optional, null)
+			new ParameterInfo("privacy", ParameterType.Optional, string.Empty)
 		}, BuildOptions("weapi", new Cookie[] { new Cookie("os", "pc") }));
 
 		/// <summary>
@@ -798,21 +793,15 @@ namespace NeteaseCloudMusicApi {
 		public static readonly CloudMusicApiProvider PlaylistUpdate = new CloudMusicApiProvider("/playlist/update");
 
 		/// <summary>
-		/// 心动模式/智能播放
+		/// 心动模式/智能播放 TODO: Handle
 		/// </summary>
-		public static readonly CloudMusicApiProvider PlaymodeIntelligenceList = new CloudMusicApiProvider("/playmode/intelligence/list", HttpMethod.Post, q => "http://music.163.com/weapi/playmode/intelligence/list", new ParameterInfo[] {
-new ParameterInfo("id", ParameterType.Required, null) { KeyAlias = "songId" },
-new ParameterInfo("pid", ParameterType.Required, null) { KeyAlias = "playlistId" },
-new ParameterInfo("sid", ParameterType.Optional, null) { KeyAlias = "startMusicId" },
-new ParameterInfo("count", ParameterType.Optional, "1"),
-new ParameterInfo("type", ParameterType.Constant, "fromPlayOne")
-}, BuildOptions("weapi"));
+		public static readonly CloudMusicApiProvider PlaymodeIntelligenceList = new CloudMusicApiProvider("/playmode/intelligence/list");
 
 		/// <summary>
 		/// 推荐节目
 		/// </summary>
 		public static readonly CloudMusicApiProvider ProgramRecommend = new CloudMusicApiProvider("/program/recommend", HttpMethod.Post, q => "https://music.163.com/weapi/program/recommend/v1", new ParameterInfo[] {
-			new ParameterInfo("type", ParameterType.Optional, null) { KeyAlias = "cateId" },
+			new ParameterInfo("type", ParameterType.Optional, string.Empty) { KeyAlias = "cateId" },
 			new ParameterInfo("limit", ParameterType.Optional, "10"),
 			new ParameterInfo("offset", ParameterType.Optional, "0")
 		}, BuildOptions("weapi"));
@@ -1094,9 +1083,11 @@ new ParameterInfo("type", ParameterType.Constant, "fromPlayOne")
 		}, BuildOptions("weapi"));
 
 		/// <summary>
-		/// 未知 TODO
+		/// 用户电台
 		/// </summary>
-		public static readonly CloudMusicApiProvider UserAudio = null;
+		public static readonly CloudMusicApiProvider UserAudio = new CloudMusicApiProvider("/user/audio", HttpMethod.Post, q => "https://music.163.com/weapi/djradio/get/byuser", new ParameterInfo[] {
+			new ParameterInfo("uid", ParameterType.Required, null) { KeyAlias = "userId" }
+		}, BuildOptions("weapi"));
 
 		/// <summary>
 		/// 云盘
@@ -1234,7 +1225,7 @@ new ParameterInfo("type", ParameterType.Constant, "fromPlayOne")
 		}, BuildOptions("weapi"));
 
 		/// <summary>
-		/// 未知 TODO
+		/// 操作记录 （无文档）
 		/// </summary>
 		public static readonly CloudMusicApiProvider Weblog = new CloudMusicApiProvider("/weblog", HttpMethod.Post, q => "https://music.163.com/weapi/feedback/weblog", Array.Empty<ParameterInfo>(), BuildOptions("weapi"));
 
