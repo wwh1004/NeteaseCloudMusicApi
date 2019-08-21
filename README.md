@@ -11,7 +11,12 @@ C#版 网易云音乐 API
 本项目需要 .NET Standard 2.0 （.NET Framework 4.6.1+ / .NET Core 2.0+） ，可跨平台使用
 
 ## Dll与Demo下载
-GitHub: [.NET Framework版Demo](https://github.com/wwh1004/NeteaseCloudMusicApi/releases/latest/download/NeteaseCloudMusicApi-net472.zip) [.NET Core版Demo](https://github.com/wwh1004/NeteaseCloudMusicApi/releases/latest/download/NeteaseCloudMusicApi-netcoreapp2.1.zip) [Dll](https://github.com/wwh1004/NeteaseCloudMusicApi/releases/latest/download/NeteaseCloudMusicApi-netstandard2.0.zip)
+GitHub:
+[.NET Framework版Demo](https://github.com/wwh1004/NeteaseCloudMusicApi/releases/latest/download/NeteaseCloudMusicApi-net472.zip)
+
+[.NET Core版Demo](https://github.com/wwh1004/NeteaseCloudMusicApi/releases/latest/download/NeteaseCloudMusicApi-netcoreapp2.1.zip)
+
+[已编译Dll](https://github.com/wwh1004/NeteaseCloudMusicApi/releases/latest/download/NeteaseCloudMusicApi-netstandard2.0.zip)
 
 AppVeyor: [![Build status](https://ci.appveyor.com/api/projects/status/guu6sx3yyy5a846o?svg=true)](https://ci.appveyor.com/project/wwh1004/neteasecloudmusicapi)
 
