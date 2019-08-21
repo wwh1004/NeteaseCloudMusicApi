@@ -30,7 +30,7 @@ deploy:
   on:
     APPVEYOR_REPO_TAG: true
 - provider: NuGet
-  auth_token:
+  api_key:
     secure: 4dEpGPHenvp4U4i1gqj9WjClPirE4R0SjMVsaYraUyQMIbPFOMvhRG8j4iq6/qzE
   on:
     APPVEYOR_REPO_TAG: true
