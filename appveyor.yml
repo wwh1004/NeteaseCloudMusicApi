@@ -8,7 +8,7 @@ build:
   project: NeteaseCloudMusicApi.sln
   verbosity: normal
 after_build:
-- cmd: dotnet publish NeteaseCloudMusicApi.sln -c Release -f netcoreapp2.1
+- cmd: dotnet publish NeteaseCloudMusicApi.Demo\NeteaseCloudMusicApi.Demo.csproj -c Release -f netcoreapp2.1
 artifacts:
 - path: bin\Release\netstandard2.0
   name: NeteaseCloudMusicApi-netstandard2.0
