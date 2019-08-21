@@ -244,3 +244,7 @@ using (CloudMusicApi api = new CloudMusicApi()) {
 	}
 }
 ```
+
+### 样例项目
+
+[wwh1004/NLyric](https://github.com/wwh1004/NLyric) - 使用本项目自动搜索下载歌词
