@@ -31,7 +31,7 @@ namespace NeteaseCloudMusicApi.util {
 			"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36 Edge/13.10586"
 		};
 
-		private static string chooseUserAgent(string ua) {
+		public static string chooseUserAgent(string ua) {
 			switch (ua) {
 			case "mobile":
 				return userAgentList[(int)Math.Floor(new Random().NextDouble() * 7)];
@@ -97,16 +97,16 @@ namespace NeteaseCloudMusicApi.util {
 						cookie.Add(new Cookie(item.Name, item.Value));
 					csrfToken = cookie["__csrf"]?.Value ?? string.Empty;
 					header = new Dictionary<string, string>() {
-						{ "osver", cookie["osver"]?.Value }, // 系统版本
-						{ "deviceId", cookie["deviceId"]?.Value }, // encrypt.base64.encode(imei + '\t02:00:00:00:00:00\t5106025eb79a5247\t70ffbaac7')
+						{ "osver", cookie["osver"]?.Value ?? string.Empty }, // 系统版本
+						{ "deviceId", cookie["deviceId"]?.Value ?? string.Empty }, // encrypt.base64.encode(imei + '\t02:00:00:00:00:00\t5106025eb79a5247\t70ffbaac7')
 						{ "appver", cookie["appver"]?.Value ?? "6.1.1" }, // app版本
 						{ "versioncode",  cookie["versioncode"]?.Value ?? "140" }, // 版本号
-						{ "mobilename", cookie["mobilename"]?.Value }, // 设备model
+						{ "mobilename", cookie["mobilename"]?.Value ?? string.Empty }, // 设备model
 						{ "buildver", cookie["buildver"]?.Value ?? GetCurrentTotalSeconds().ToString() },
 						{ "resolution", cookie["resolution"]?.Value ?? "1920x1080" }, // 设备分辨率
 						{ "__csrf", csrfToken },
 						{ "os", cookie["os"]?.Value ?? "android" },
-						{ "channel", cookie["channel"]?.Value },
+						{ "channel", cookie["channel"]?.Value ?? string.Empty },
 						{ "requestId", $"{GetCurrentTotalMilliseconds()}_{Math.Floor(new Random().NextDouble() * 1000).ToString().PadLeft(4, '0')}" }
 					};
 					if (!(cookie["MUSIC_U"] is null))

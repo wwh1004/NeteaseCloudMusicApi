@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Extensions;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using NeteaseCloudMusicApi.util;
 using Newtonsoft.Json;
@@ -76,12 +79,58 @@ namespace NeteaseCloudMusicApi {
 			if (queries is null)
 				throw new ArgumentNullException(nameof(queries));
 
-			if (provider == CloudMusicApiProviders.LoginStatus)
-				return HandleLoginStatus();
+			if (provider == CloudMusicApiProviders.CheckMusic)
+				return HandleCheckMusicAsync(queries);
+			else if (provider == CloudMusicApiProviders.LoginStatus)
+				return HandleLoginStatusAsync();
+			else if (provider == CloudMusicApiProviders.RelatedPlaylist)
+				return HandleRelatedPlaylistAsync(queries);
 			return RequestAsync(provider.Method, provider.Url(queries), provider.Data(queries), provider.Options);
 		}
 
-		private async Task<(bool, JObject)> HandleLoginStatus() {
+		private async Task<(bool, JObject)> RequestAsync(HttpMethod method, string url, IEnumerable<KeyValuePair<string, string>> data, options options) {
+			if (method is null)
+				throw new ArgumentNullException(nameof(method));
+			if (url is null)
+				throw new ArgumentNullException(nameof(url));
+			if (data is null)
+				throw new ArgumentNullException(nameof(data));
+			if (options is null)
+				throw new ArgumentNullException(nameof(options));
+
+			bool isOk;
+			JObject json;
+
+			(isOk, json) = await request.createRequest(_client, method, url, data, options);
+			json = (JObject)json["body"];
+			if (!isOk && (int?)json["code"] == 301)
+				json["msg"] = "需要登录";
+			return (isOk, json);
+		}
+
+		private async Task<(bool, JObject)> HandleCheckMusicAsync(Dictionary<string, string> queries) {
+			CloudMusicApiProvider provider;
+			bool isOk;
+			JObject json;
+			JObject result;
+			bool playable;
+
+			provider = CloudMusicApiProviders.CheckMusic;
+			(isOk, json) = await RequestAsync(provider.Method, provider.Url(queries), provider.Data(queries), provider.Options);
+			if (!isOk)
+				return (false, null);
+			playable = (int?)json["code"] == 200 && (int?)json.SelectToken("data[0].code") == 200;
+			result = new JObject {
+				{ "success", playable },
+				{ "message", playable ? "ok" : "亲爱的,暂无版权"}
+			};
+			return (true, result);
+		}
+
+		private async Task<(bool, JObject)> HandleLoginStatusAsync() {
+			HttpResponseMessage response;
+
+			response = null;
 			try {
 				const string GUSER = "GUser=";
 				const string GBINDS = "GBinds=";
@@ -90,8 +139,8 @@ namespace NeteaseCloudMusicApi {
 				int index;
 				JObject json;
 
-				using (HttpResponseMessage response = await _client.GetAsync("https://music.163.com"))
-					s = Encoding.UTF8.GetString(await response.Content.ReadAsByteArrayAsync());
+				response = await _client.GetAsync("https://music.163.com");
+				s = Encoding.UTF8.GetString(await response.Content.ReadAsByteArrayAsync());
 				index = s.IndexOf(GUSER, StringComparison.Ordinal);
 				if (index == -1)
 					goto errorExit;
@@ -112,30 +161,50 @@ namespace NeteaseCloudMusicApi {
 			catch {
 				goto errorExit;
 			}
+			finally {
+				response?.Dispose();
+			}
 		errorExit:
 			return (false, new JObject {
 				{ "code", 301 }
 			});
 		}
 
-		private async Task<(bool, JObject)> RequestAsync(HttpMethod method, string url, IEnumerable<KeyValuePair<string, string>> data, options options) {
-			if (method is null)
-				throw new ArgumentNullException(nameof(method));
-			if (url is null)
-				throw new ArgumentNullException(nameof(url));
-			if (data is null)
-				throw new ArgumentNullException(nameof(data));
-			if (options is null)
-				throw new ArgumentNullException(nameof(options));
+		private async Task<(bool, JObject)> HandleRelatedPlaylistAsync(Dictionary<string, string> queries) {
+			HttpResponseMessage response;
 
-			bool isOk;
-			JObject json;
+			response = null;
+			try {
+				string s;
+				MatchCollection matchs;
+				JArray playlists;
 
-			(isOk, json) = await request.createRequest(_client, method, url, data, options);
-			json = (JObject)json["body"];
-			if (!isOk && (int?)(json["code"] as JValue) == 301)
-				json["msg"] = "需要登录";
-			return (isOk, json);
+				response = await _client.SendAsync(HttpMethod.Get, "https://music.163.com/playlist", new QueryCollection { { "id", queries["id"] } }, new QueryCollection { { "User-Agent", request.chooseUserAgent("pc") } });
+				s = Encoding.UTF8.GetString(await response.Content.ReadAsByteArrayAsync());
+				matchs = Regex.Matches(s, @"<div class=""cver u-cover u-cover-3"">[\s\S]*?<img src=""([^""]+)"">[\s\S]*?<a class=""sname f-fs1 s-fc0"" href=""([^""]+)""[^>]*>([^<]+?)<\/a>[\s\S]*?<a class=""nm nm f-thide s-fc3"" href=""([^""]+)""[^>]*>([^<]+?)<\/a>");
+				playlists = new JArray(matchs.Cast<Match>().Select(match => new JObject {
+					{ "creator", new JObject {
+						{ "userId", match.Groups[4].Value.Substring("/user/home?id=".Length) },
+						{ "nickname", match.Groups[5].Value }
+					} },
+					{ "coverImgUrl", match.Groups[1].Value.Substring(0, match.Groups[1].Value.Length - "?param=50y50".Length) },
+					{ "name", match.Groups[3].Value },
+					{ "id", match.Groups[2].Value.Substring("/playlist?id=".Length) },
+				}));
+				return (true, new JObject {
+					{ "code", 200 },
+					{ "playlists", playlists }
+				});
+			}
+			catch (Exception ex) {
+				return (false, new JObject {
+					{ "code", 500 },
+					{ "msg", ex.ToFullString() }
+				});
+			}
+			finally {
+				response?.Dispose();
+			}
 		}
 
 		/// <summary />

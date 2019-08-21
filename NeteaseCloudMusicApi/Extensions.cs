@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -42,6 +43,10 @@ namespace NeteaseCloudMusicApi {
 			buffer = new byte[length];
 			random.NextBytes(buffer);
 			return buffer;
+		}
+
+		public static TValue GetValueOrDefault<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, TKey key, TValue defaultValue) {
+			return dictionary.TryGetValue(key, out TValue value) ? value : defaultValue;
 		}
 	}
 }
