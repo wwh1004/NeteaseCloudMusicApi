@@ -8,7 +8,10 @@ build:
   project: NeteaseCloudMusicApi.sln
   verbosity: normal
 after_build:
-- cmd: dotnet publish NeteaseCloudMusicApi.Demo\NeteaseCloudMusicApi.Demo.csproj -c Release -f netcoreapp2.1
+- cmd: >-
+  dotnet pack NeteaseCloudMusicApi\NeteaseCloudMusicApi.csproj -c Release
+  
+  dotnet publish NeteaseCloudMusicApi.Demo\NeteaseCloudMusicApi.Demo.csproj -c Release -f netcoreapp2.1
 artifacts:
 - path: bin\Release\netstandard2.0
   name: NeteaseCloudMusicApi-netstandard2.0
@@ -22,5 +25,10 @@ deploy:
   release: NeteaseCloudMusicApi
   auth_token:
     secure: +8UJ1C312inNq+80I8WST34vPMrCylnmTx+9rmuIh1qnsArA5x2b8yc+kcwkXmQC
+  on:
+    APPVEYOR_REPO_TAG: true
+- provider: NuGet
+  auth_token:
+    secure: 4dEpGPHenvp4U4i1gqj9WjClPirE4R0SjMVsaYraUyQMIbPFOMvhRG8j4iq6/qzE
   on:
     APPVEYOR_REPO_TAG: true
