@@ -17,11 +17,11 @@ namespace NeteaseCloudMusicApi {
 	/// 网易云音乐API
 	/// </summary>
 	public sealed partial class CloudMusicApi : IDisposable {
-		private static readonly Dictionary<string, string> _emptyQueries = new Dictionary<string, string>();
-
 		private readonly HttpClient _client;
 		private readonly HttpClientHandler _clientHandler;
 		private bool _isDisposed;
+
+		private static readonly Dictionary<string, string> _emptyQueries = new Dictionary<string, string>();
 
 		/// <summary />
 		public HttpClient Client => _client;
