@@ -1,4 +1,4 @@
-# NeteaseCloudMusicApi
+# NeteaseCloudMusicApi [![Build status](https://ci.appveyor.com/api/projects/status/guu6sx3yyy5a846o?svg=true)](https://ci.appveyor.com/project/wwh1004/neteasecloudmusicapi) [![NuGet](https://img.shields.io/nuget/v/NeteaseCloudMusicApi.svg)](https://www.nuget.org/packages/NeteaseCloudMusicApi)
 C#版 网易云音乐 API
 
 ## 简介
@@ -13,13 +13,13 @@ C#版 网易云音乐 API
 ## Dll与Demo下载
 GitHub:
 
+[NeteaseCloudMusicApi-netstandard2.0.zip（已编译Dll）](https://github.com/wwh1004/NeteaseCloudMusicApi/releases/latest/download/NeteaseCloudMusicApi-netstandard2.0.zip)
+
 [NeteaseCloudMusicApi-net472.zip（.NET Framework版Demo）](https://github.com/wwh1004/NeteaseCloudMusicApi/releases/latest/download/NeteaseCloudMusicApi-net472.zip)
 
 [NeteaseCloudMusicApi-netcoreapp2.1.zip（.NET Core版Demo）](https://github.com/wwh1004/NeteaseCloudMusicApi/releases/latest/download/NeteaseCloudMusicApi-netcoreapp2.1.zip)
 
-[NeteaseCloudMusicApi-netstandard2.0.zip（已编译Dll）](https://github.com/wwh1004/NeteaseCloudMusicApi/releases/latest/download/NeteaseCloudMusicApi-netstandard2.0.zip)
-
-AppVeyor: [![Build status](https://ci.appveyor.com/api/projects/status/guu6sx3yyy5a846o?svg=true)](https://ci.appveyor.com/project/wwh1004/neteasecloudmusicapi)
+AppVeyor: 
 
 ## 功能特性
 
