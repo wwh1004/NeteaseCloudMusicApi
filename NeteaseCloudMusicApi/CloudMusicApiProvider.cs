@@ -883,11 +883,7 @@ namespace NeteaseCloudMusicApi {
 		/// <summary>
 		/// 每日推荐歌曲
 		/// </summary>
-		public static readonly CloudMusicApiProvider RecommendSongs = new CloudMusicApiProvider("/recommend/songs", HttpMethod.Post, q => "https://music.163.com/weapi/v1/discovery/recommend/songs", new ParameterInfo[] {
-			new ParameterInfo("limit", ParameterType.Constant, "30"),
-			new ParameterInfo("offset", ParameterType.Constant, "0"),
-			new ParameterInfo("total", ParameterType.Constant, "true")
-		}, BuildOptions("weapi"));
+		public static readonly CloudMusicApiProvider RecommendSongs = new CloudMusicApiProvider("/recommend/songs", HttpMethod.Post, q => "https://music.163.com/weapi/v1/discovery/recommend/songs", Array.Empty<ParameterInfo>(), BuildOptions("weapi"));
 
 		/// <summary>
 		/// 注册(修改密码)

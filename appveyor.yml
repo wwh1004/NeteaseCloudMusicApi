@@ -19,6 +19,8 @@ artifacts:
   name: NeteaseCloudMusicApi.Demo-net472
 - path: bin\Release\netcoreapp2.1\publish
   name: NeteaseCloudMusicApi.Demo-netcoreapp2.1
+- path: bin\Release\*.*nupkg
+  name: NeteaseCloudMusicApi NuGet Packages
 deploy:
 - provider: GitHub
   tag: $(APPVEYOR_REPO_TAG_NAME)
