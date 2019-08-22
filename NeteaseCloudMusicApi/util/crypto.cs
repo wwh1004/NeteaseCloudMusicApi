@@ -16,6 +16,8 @@ namespace NeteaseCloudMusicApi.util {
 		private const string publicKey = "-----BEGIN PUBLIC KEY-----\nMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDgtQn2JZ34ZC28NWYpAUd98iZ37BUrX/aKzmFbt7clFSs6sXqHauqKWqdtLkF2KexO40H1YTX8z2lSgBBOAxLsvaklV8k4cBFK9snQXE9/DDaFt6Rr7iVZMldczhC0JNgTz+SHXT6CBHuX3e9SdB1Ua44oncaTWz7OBGLbCiK45wIDAQAB\n-----END PUBLIC KEY-----";
 		private static readonly byte[] eapiKey = Encoding.ASCII.GetBytes("e82ckenh8dichen8");
 
+		private static RSAParameters? _cachedPublicKey;
+
 		public static Dictionary<string, string> weapi(object @object) {
 			string text;
 			byte[] secretKey;
@@ -84,7 +86,9 @@ namespace NeteaseCloudMusicApi.util {
 		private static byte[] rsaEncrypt(byte[] buffer, string key) {
 			RSAParameters rsaParameters;
 
-			rsaParameters = ParsePublicKey(key);
+			if (_cachedPublicKey is null)
+				_cachedPublicKey = ParsePublicKey(key);
+			rsaParameters = _cachedPublicKey.Value;
 			return BigInteger.ModPow(GetBigIntegerBigEndian(buffer), GetBigIntegerBigEndian(rsaParameters.Exponent), GetBigIntegerBigEndian(rsaParameters.Modulus)).ToByteArray(true, true);
 
 			RSAParameters ParsePublicKey(string _publicKey) {
