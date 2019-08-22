@@ -19,8 +19,6 @@ GitHub:
 
 [NeteaseCloudMusicApi-netcoreapp2.1.zip（.NET Core版Demo）](https://github.com/wwh1004/NeteaseCloudMusicApi/releases/latest/download/NeteaseCloudMusicApi-netcoreapp2.1.zip)
 
-AppVeyor: 
-
 ## 功能特性
 
 1. 登录
