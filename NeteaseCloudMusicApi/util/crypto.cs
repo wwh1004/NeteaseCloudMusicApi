@@ -27,7 +27,7 @@ namespace NeteaseCloudMusicApi.util {
 			secretKey = secretKey.Select(n => (byte)base62[n % 62]).ToArray();
 			return new Dictionary<string, string> {
 				{ "params", aesEncrypt(aesEncrypt(text.ToByteArrayUtf8(), CipherMode.CBC, presetKey, iv).ToBase64String().ToByteArrayUtf8(), CipherMode.CBC, secretKey, iv).ToBase64String() },
-				{ "encSecKey", rsaEncrypt(secretKey.Reverse().ToArray(), publicKey).ToHexStringLower() }
+				{ "encSecKey", rsaEncrypt(secretKey.Reverse().ToArray()/*, publicKey*/).ToHexStringLower() }
 			};
 		}
 
@@ -83,11 +83,11 @@ namespace NeteaseCloudMusicApi.util {
 			}
 		}
 
-		private static byte[] rsaEncrypt(byte[] buffer, string key) {
+		private static byte[] rsaEncrypt(byte[] buffer/*, string key*/) {
 			RSAParameters rsaParameters;
 
 			if (_cachedPublicKey is null)
-				_cachedPublicKey = ParsePublicKey(key);
+				_cachedPublicKey = ParsePublicKey(publicKey);
 			rsaParameters = _cachedPublicKey.Value;
 			return BigInteger.ModPow(GetBigIntegerBigEndian(buffer), GetBigIntegerBigEndian(rsaParameters.Exponent), GetBigIntegerBigEndian(rsaParameters.Modulus)).ToByteArray(true, true);
 
