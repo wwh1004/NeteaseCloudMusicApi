@@ -277,7 +277,8 @@ namespace NeteaseCloudMusicApi {
 		/// 检测手机号码是否已注册
 		/// </summary>
 		public static readonly CloudMusicApiProvider CellphoneExistenceCheck = new CloudMusicApiProvider("/cellphone/existence/check", HttpMethod.Post, q => "http://music.163.com/eapi/cellphone/existence/check", new ParameterInfo[] {
-			new ParameterInfo("cellphone") { KeyForwarding = "phone" }
+			new ParameterInfo("cellphone") { KeyForwarding = "phone" },
+			new ParameterInfo("countrycode", ParameterType.Optional, string.Empty)
 		}, BuildOptions("eapi", null, null, "/api/cellphone/existence/check"));
 
 		/// <summary>
@@ -291,17 +292,27 @@ namespace NeteaseCloudMusicApi {
 		/// <summary>
 		/// 发送/删除评论
 		/// </summary>
-		public static readonly CloudMusicApiProvider Comment = new CloudMusicApiProvider("/comment", HttpMethod.Post, q => $"https://music.163.com/weapi/resource/comments/{(q["t"] == "1" ? "add" : "delete")}", Array.Empty<ParameterInfo>(), BuildOptions("weapi", new Cookie[] { new Cookie("os", "pc") })) {
+		public static readonly CloudMusicApiProvider Comment = new CloudMusicApiProvider("/comment", HttpMethod.Post, q => $"https://music.163.com/weapi/resource/comments/{(q["t"] == "1" ? "add" : (q["t"] == "0" ? "delete" : "reply"))}", Array.Empty<ParameterInfo>(), BuildOptions("weapi", new Cookie[] { new Cookie("os", "pc") })) {
 			DataProvider = queries => {
 				QueryCollection data;
 
 				data = new QueryCollection {
 					{ "threadId", CommentTypeTransformer(queries["type"]) + queries["id"] }
 				};
-				if (queries["t"] == "1")
-					data.Add("content", queries["content"]);
-				else
+				switch (queries["t"]) {
+				case "0":
 					data.Add("commentId", queries["commentId"]);
+					break;
+				case "1":
+					data.Add("content", queries["content"]);
+					break;
+				case "2":
+					data.Add("commentId", queries["commentId"]);
+					data.Add("content", queries["content"]);
+					break;
+				default:
+					throw new ArgumentOutOfRangeException("t");
+				}
 				return data;
 			}
 		};
@@ -646,8 +657,8 @@ namespace NeteaseCloudMusicApi {
 		/// </summary>
 		public static readonly CloudMusicApiProvider MsgPrivateHistory = new CloudMusicApiProvider("/msg/private/history", HttpMethod.Post, q => "https://music.163.com/api/msg/private/history", new ParameterInfo[] {
 			new ParameterInfo("userId") { KeyForwarding = "uid" },
-			new ParameterInfo("offset", ParameterType.Optional, "0"),
 			new ParameterInfo("limit", ParameterType.Optional, "30"),
+			new ParameterInfo("time", ParameterType.Optional, "0") { KeyForwarding = "before" },
 			new ParameterInfo("total", ParameterType.Constant, "true")
 		}, BuildOptions("weapi"));
 
@@ -719,7 +730,6 @@ namespace NeteaseCloudMusicApi {
 		/// </summary>
 		public static readonly CloudMusicApiProvider Personalized = new CloudMusicApiProvider("/personalized", HttpMethod.Post, q => "https://music.163.com/weapi/personalized/playlist", new ParameterInfo[] {
 			new ParameterInfo("limit", ParameterType.Optional, "30"),
-			new ParameterInfo("offset", ParameterType.Optional, "0"),
 			new ParameterInfo("total", ParameterType.Constant, "true"),
 			new ParameterInfo("n", ParameterType.Constant, "1000")
 		}, BuildOptions("weapi"));
@@ -1334,14 +1344,10 @@ namespace NeteaseCloudMusicApi {
 
 		private static string BannerTypeTransformer(string type) {
 			switch (type) {
-			case "0":
-				return "pc";
-			case "1":
-				return "android";
-			case "2":
-				return "iphone";
-			case "3":
-				return "ipad";
+			case "0": return "pc";
+			case "1": return "android";
+			case "2": return "iphone";
+			case "3": return "ipad";
 			default:
 				throw new ArgumentOutOfRangeException(nameof(type));
 			}
@@ -1349,20 +1355,13 @@ namespace NeteaseCloudMusicApi {
 
 		private static string CommentTypeTransformer(string type) {
 			switch (type) {
-			case "0":
-				return "R_SO_4_"; // 歌曲
-			case "1":
-				return "R_MV_5_"; // MV
-			case "2":
-				return "A_PL_0_"; // 歌单
-			case "3":
-				return "R_AL_3_"; // 专辑
-			case "4":
-				return "A_DJ_1_"; // 电台
-			case "5":
-				return "R_VI_62_"; // 视频
-			case "6":
-				return "A_EV_2_"; // 动态
+			case "0": return "R_SO_4_";  // 歌曲
+			case "1": return "R_MV_5_";  // MV
+			case "2": return "A_PL_0_";  // 歌单
+			case "3": return "R_AL_3_";  // 专辑
+			case "4": return "A_DJ_1_";  // 电台
+			case "5": return "R_VI_62_"; // 视频
+			case "6": return "A_EV_2_";  // 动态
 			default:
 				throw new ArgumentOutOfRangeException(nameof(type));
 			}
@@ -1370,14 +1369,10 @@ namespace NeteaseCloudMusicApi {
 
 		private static string ResourceTypeTransformer(string type) {
 			switch (type) {
-			case "1":
-				return "R_MV_5_"; // MV
-			case "4":
-				return "A_DJ_1_"; // 电台
-			case "5":
-				return "R_VI_62_"; // 视频
-			case "6":
-				return "A_EV_2_"; // 动态
+			case "1": return "R_MV_5_";  // MV
+			case "4": return "A_DJ_1_";  // 电台
+			case "5": return "R_VI_62_"; // 视频
+			case "6": return "A_EV_2_";  // 动态
 			default:
 				throw new ArgumentOutOfRangeException(nameof(type));
 			}
@@ -1385,54 +1380,40 @@ namespace NeteaseCloudMusicApi {
 
 		private static string TopListIdTransformer(string idx) {
 			switch (idx) {
-			case "0":
-				return "3779629"; // 云音乐新歌榜
-			case "1":
-				return "3778678"; // 云音乐热歌榜
-			case "2":
-				return "2884035"; // 云音乐原创榜
-			case "3":
-				return "19723756"; // 云音乐飙升榜
-			case "4":
-				return "10520166"; // 云音乐电音榜
-			case "5":
-				return "180106"; // UK排行榜周榜
-			case "6":
-				return "60198"; // 美国Billboard周榜
-			case "7":
-				return "21845217"; // KTV嗨榜
-			case "8":
-				return "11641012"; // iTunes榜
-			case "9":
-				return "120001"; // Hit FM Top榜
-			case "10":
-				return "60131"; // 日本Oricon周榜
-			case "11":
-				return "3733003"; // 韩国Melon排行榜周榜
-			case "12":
-				return "60255"; // 韩国Mnet排行榜周榜
-			case "13":
-				return "46772709"; // 韩国Melon原声周榜
-			case "14":
-				return "112504"; // 中国TOP排行榜(港台榜)
-			case "15":
-				return "64016"; // 中国TOP排行榜(内地榜)
-			case "16":
-				return "10169002"; // 香港电台中文歌曲龙虎榜
-			case "17":
-				return "4395559"; // 华语金曲榜
-			case "18":
-				return "1899724"; // 中国嘻哈榜
-			case "19":
-				return "27135204"; // 法国 NRJ EuroHot 30周榜
-			case "20":
-				return "112463"; // 台湾Hito排行榜
-			case "21":
-				return "3812895"; // Beatport全球电子舞曲榜
-			case "22":
-				return "71385702"; // 云音乐ACG音乐榜
-			case "23":
-				return "991319590"; // 云音乐嘻哈榜
+			case "0": return "3779629";     // 云音乐新歌榜
+			case "1": return "3778678";     // 云音乐热歌榜
+			case "2": return "2884035";     // 云音乐原创榜
+			case "3": return "19723756";    // 云音乐飙升榜
+			case "4": return "10520166";    // 云音乐电音榜
+			case "5": return "180106";      // UK排行榜周榜
+			case "6": return "60198";       // 美国Billboard周榜
+			case "7": return "21845217";    // KTV嗨榜
+			case "8": return "11641012";    // iTunes榜
+			case "9": return "120001";      // Hit FM Top榜
+			case "10": return "60131";      // 日本Oricon周榜
+			case "11": return "3733003";    // 韩国Melon排行榜周榜
+			case "12": return "60255";      // 韩国Mnet排行榜周榜
+			case "13": return "46772709";   // 韩国Melon原声周榜
+			case "14": return "112504";     // 中国TOP排行榜(港台榜)
+			case "15": return "64016";      // 中国TOP排行榜(内地榜)
+			case "16": return "10169002";   // 香港电台中文歌曲龙虎榜
+			case "17": return "4395559";    // 华语金曲榜
+			case "18": return "1899724";    // 中国嘻哈榜
+			case "19": return "27135204";   // 法国 NRJ EuroHot 30周榜
+			case "20": return "112463";     // 台湾Hito排行榜
+			case "21": return "3812895";    // Beatport全球电子舞曲榜
+			case "22": return "71385702";   // 云音乐ACG音乐榜
+			case "23": return "991319590";  //云音乐说唱榜
+			case "24": return "71384707";   //云音乐古典音乐榜
+			case "25": return "1978921795"; //云音乐电音榜
+			case "26": return "2250011882"; //抖音排行榜
+			case "27": return "2617766278"; //新声榜
+			case "28": return "745956260";  // 云音乐韩语榜
+			case "29": return "2023401535"; // 英国Q杂志中文版周榜
+			case "30": return "2006508653"; // 电竞音乐榜
+			case "31": return "2809513713"; // 云音乐欧美热歌榜
+			case "32": return "2809577409"; // 云音乐欧美新歌榜
+			case "33": return "2847251561"; // 说唱TOP榜
 			default:
 				throw new ArgumentOutOfRangeException(nameof(idx));
 			}
