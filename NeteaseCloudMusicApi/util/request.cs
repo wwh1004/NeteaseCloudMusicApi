@@ -166,6 +166,8 @@ namespace NeteaseCloudMusicApi.util {
 					answer["body"] = JObject.Parse(await response.Content.ReadAsStringAsync());
 					temp2 = (JValue)answer["body"]["code"];
 					answer["status"] = temp2 is null ? (int)response.StatusCode : (int)temp2;
+					if (!(temp2 is null) && (int)temp2 == 502)
+						answer["status"] = 200;
 				}
 				temp3 = (int)answer["status"];
 				temp3 = 100 < temp3 && temp3 < 600 ? temp3 : 400;

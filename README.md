@@ -10,6 +10,10 @@ C#版 网易云音乐 API
 
 本项目需要 .NET Standard 2.0 （.NET Framework 4.6.1+ / .NET Core 2.0+） ，可跨平台使用
 
+### 样例项目
+
+[wwh1004/NLyric](https://github.com/wwh1004/NLyric) - 使用本项目自动搜索下载歌词
+
 ## Dll与Demo下载
 GitHub:
 
@@ -155,6 +159,16 @@ GitHub:
 132. 用户电台
 133. 热门电台
 134. 电台 - 节目详情
+135. 电台 - 节目榜
+136. 电台 - 新晋电台榜/热门电台榜
+137. 类别热门电台
+138. 云村热评
+139. 电台24小时节目榜
+140. 电台24小时主播榜
+141. 电台最热主播榜
+142. 电台主播新人榜
+143. 电台付费精品榜
+144. 歌手热门50首歌曲
 
 ## 样例
 ### 实例化API
@@ -242,7 +256,3 @@ using (CloudMusicApi api = new CloudMusicApi()) {
 	}
 }
 ```
-
-### 样例项目
-
-[wwh1004/NLyric](https://github.com/wwh1004/NLyric) - 使用本项目自动搜索下载歌词

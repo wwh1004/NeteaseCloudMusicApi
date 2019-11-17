@@ -198,7 +198,7 @@ namespace NeteaseCloudMusicApi {
 		/// 歌手分类列表
 		/// </summary>
 		public static readonly CloudMusicApiProvider ArtistList = new CloudMusicApiProvider("/artist/list", HttpMethod.Post, q => "https://music.163.com/weapi/artist/list", new ParameterInfo[] {
-			new ParameterInfo("categoryCode") { KeyForwarding = "cat" },
+			new ParameterInfo("categoryCode", ParameterType.Optional, "1001") { KeyForwarding = "cat" },
 			new ParameterInfo("initial", ParameterType.Optional, string.Empty) { Transformer = t => ((int)t[0]).ToString() },
 			new ParameterInfo("offset", ParameterType.Optional, "0"),
 			new ParameterInfo("limit", ParameterType.Optional, "30"),
@@ -230,6 +230,13 @@ namespace NeteaseCloudMusicApi {
 			new ParameterInfo("limit", ParameterType.Optional, "25"),
 			new ParameterInfo("offset", ParameterType.Optional, "0"),
 			new ParameterInfo("total", ParameterType.Constant, "true")
+		}, BuildOptions("weapi"));
+
+		/// <summary>
+		/// 歌手热门50首歌曲
+		/// </summary>
+		public static readonly CloudMusicApiProvider ArtistTopSong = new CloudMusicApiProvider("/artist/top/song", HttpMethod.Post, q => "https://music.163.com/api/artist/top/song", new ParameterInfo[] {
+			new ParameterInfo("id")
 		}, BuildOptions("weapi"));
 
 		/// <summary>
@@ -357,6 +364,11 @@ namespace NeteaseCloudMusicApi {
 		}, BuildOptions("weapi", new Cookie[] { new Cookie("os", "pc") }));
 
 		/// <summary>
+		/// 云村热评
+		/// </summary>
+		public static readonly CloudMusicApiProvider CommentHotwallList = new CloudMusicApiProvider("/comment/hotwall/list", HttpMethod.Post, q => "https://music.163.com/api/comment/hotwall/list/get", Array.Empty<ParameterInfo>(), BuildOptions("weapi"));
+
+		/// <summary>
 		/// 给评论点赞
 		/// </summary>
 		public static readonly CloudMusicApiProvider CommentLike = new CloudMusicApiProvider("/comment/like", HttpMethod.Post, q => $"https://music.163.com/weapi/v1/comment/{(q["t"] == "1" ? "like" : "unlike")}", new ParameterInfo[] {
@@ -423,7 +435,7 @@ namespace NeteaseCloudMusicApi {
 		/// <summary>
 		/// 电台banner
 		/// </summary>
-		public static readonly CloudMusicApiProvider DjBanner = new CloudMusicApiProvider("/dj/banner", HttpMethod.Post, q => "http://music.163.com/weapi/djradio/banner/get", Array.Empty<ParameterInfo>(), BuildOptions("weapi"));
+		public static readonly CloudMusicApiProvider DjBanner = new CloudMusicApiProvider("/dj/banner", HttpMethod.Post, q => "http://music.163.com/weapi/djradio/banner/get", Array.Empty<ParameterInfo>(), BuildOptions("weapi", new Cookie[] { new Cookie("os", "pc") }));
 
 		/// <summary>
 		/// 电台 - 非热门类型
@@ -481,6 +493,30 @@ namespace NeteaseCloudMusicApi {
 		}, BuildOptions("weapi"));
 
 		/// <summary>
+		/// 电台 - 节目榜
+		/// </summary>
+		public static readonly CloudMusicApiProvider DjProgramToplist = new CloudMusicApiProvider("/dj/program/toplist", HttpMethod.Post, q => "https://music.163.com/api/program/toplist/v1", new ParameterInfo[] {
+			new ParameterInfo("limit", ParameterType.Optional, "100"),
+			new ParameterInfo("offset", ParameterType.Optional, "0")
+		}, BuildOptions("weapi"));
+
+		/// <summary>
+		/// 电台 - 24小时节目榜
+		/// </summary>
+		public static readonly CloudMusicApiProvider DjProgramToplistHours = new CloudMusicApiProvider("/dj/program/toplist/hours", HttpMethod.Post, q => "https://music.163.com/api/program/toplist/hours", new ParameterInfo[] {
+			new ParameterInfo("limit", ParameterType.Optional, "100")
+		}, BuildOptions("weapi"));
+
+		/// <summary>
+		/// 电台 - 类别热门电台
+		/// </summary>
+		public static readonly CloudMusicApiProvider DjRadioHot = new CloudMusicApiProvider("/dj/radio/hot", HttpMethod.Post, q => "https://music.163.com/api/djradio/hot", new ParameterInfo[] {
+			new ParameterInfo("cateId"),
+			new ParameterInfo("limit", ParameterType.Optional, "30"),
+			new ParameterInfo("offset", ParameterType.Optional, "0"),
+		}, BuildOptions("weapi"));
+
+		/// <summary>
 		/// 电台 - 推荐
 		/// </summary>
 		public static readonly CloudMusicApiProvider DjRecommend = new CloudMusicApiProvider("/dj/recommend", HttpMethod.Post, q => "https://music.163.com/weapi/djradio/recommend/v1", Array.Empty<ParameterInfo>(), BuildOptions("weapi"));
@@ -513,6 +549,43 @@ namespace NeteaseCloudMusicApi {
 		/// </summary>
 		public static readonly CloudMusicApiProvider DjTodayPerfered = new CloudMusicApiProvider("/dj/today/perfered", HttpMethod.Post, q => "http://music.163.com/weapi/djradio/home/today/perfered", new ParameterInfo[] {
 			new ParameterInfo("page", ParameterType.Optional, "0")
+		}, BuildOptions("weapi"));
+
+		/// <summary>
+		/// 电台 - 新晋电台榜/热门电台榜
+		/// </summary>
+		public static readonly CloudMusicApiProvider DjToplist = new CloudMusicApiProvider("/dj/toplist", HttpMethod.Post, q => "https://music.163.com/api/djradio/toplist", new ParameterInfo[] {
+			new ParameterInfo("limit", ParameterType.Optional, "30"),
+			new ParameterInfo("offset", ParameterType.Optional, "0"),
+			new ParameterInfo("type", ParameterType.Optional, "new") { Transformer = DjToplistTypeTransformer }
+		}, BuildOptions("weapi"));
+
+		/// <summary>
+		/// 电台 - 24小时主播榜
+		/// </summary>
+		public static readonly CloudMusicApiProvider DjToplistHours = new CloudMusicApiProvider("/dj/toplist/hours", HttpMethod.Post, q => "https://music.163.com/api/dj/toplist/hours", new ParameterInfo[] {
+			new ParameterInfo("limit", ParameterType.Optional, "100")
+		}, BuildOptions("weapi"));
+
+		/// <summary>
+		/// 电台 - 主播新人榜
+		/// </summary>
+		public static readonly CloudMusicApiProvider DjToplistNewcomer = new CloudMusicApiProvider("/dj/toplist/newcomer", HttpMethod.Post, q => "https://music.163.com/api/dj/toplist/newcomer", new ParameterInfo[] {
+			new ParameterInfo("limit", ParameterType.Optional, "100")
+		}, BuildOptions("weapi"));
+
+		/// <summary>
+		/// 电台 - 付费精品
+		/// </summary>
+		public static readonly CloudMusicApiProvider DjToplistPay = new CloudMusicApiProvider("/dj/toplist/pay", HttpMethod.Post, q => "https://music.163.com/api/djradio/toplist/pay", new ParameterInfo[] {
+			new ParameterInfo("limit", ParameterType.Optional, "100")
+		}, BuildOptions("weapi"));
+
+		/// <summary>
+		/// 电台 - 最热主播榜
+		/// </summary>
+		public static readonly CloudMusicApiProvider DjToplistPopular = new CloudMusicApiProvider("/dj/toplist/popular", HttpMethod.Post, q => "https://music.163.com/api/dj/toplist/popular", new ParameterInfo[] {
+			new ParameterInfo("limit", ParameterType.Optional, "100")
 		}, BuildOptions("weapi"));
 
 		/// <summary>
@@ -564,7 +637,7 @@ namespace NeteaseCloudMusicApi {
 		/// </summary>
 		public static readonly CloudMusicApiProvider Like = new CloudMusicApiProvider("/like", HttpMethod.Post, q => $"https://music.163.com/weapi/radio/like?alg={q.GetValueOrDefault("alg", "itembased")}&trackId={q["id"]}&time={q.GetValueOrDefault("time", "25")}", new ParameterInfo[] {
 			new ParameterInfo("trackId") { KeyForwarding = "id" },
-			new ParameterInfo("like", ParameterType.Optional, "true") { Transformer = t => t == "false" ? "false" : "true" }
+			new ParameterInfo("like")
 		}, BuildOptions("weapi"));
 
 		/// <summary>
@@ -1367,6 +1440,15 @@ namespace NeteaseCloudMusicApi {
 			}
 		}
 
+		private static string DjToplistTypeTransformer(string type) {
+			switch (type) {
+			case "new": return "0";
+			case "hot": return "1";
+			default:
+				throw new ArgumentOutOfRangeException(nameof(type));
+			}
+		}
+
 		private static string ResourceTypeTransformer(string type) {
 			switch (type) {
 			case "1": return "R_MV_5_";  // MV
@@ -1414,6 +1496,9 @@ namespace NeteaseCloudMusicApi {
 			case "31": return "2809513713"; // 云音乐欧美热歌榜
 			case "32": return "2809577409"; // 云音乐欧美新歌榜
 			case "33": return "2847251561"; // 说唱TOP榜
+			case "34": return "3001835560"; // 云音乐ACG动画榜
+			case "35": return "3001795926"; // 云音乐ACG游戏榜
+			case "36": return "3001890046"; // 云音乐ACG VOCALOID榜
 			default:
 				throw new ArgumentOutOfRangeException(nameof(idx));
 			}

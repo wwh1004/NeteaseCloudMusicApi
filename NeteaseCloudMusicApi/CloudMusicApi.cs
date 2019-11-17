@@ -81,6 +81,8 @@ namespace NeteaseCloudMusicApi {
 
 			if (provider == CloudMusicApiProviders.CheckMusic)
 				return HandleCheckMusicAsync(queries);
+			else if (provider == CloudMusicApiProviders.Login)
+				return HandleLoginAsync(queries);
 			else if (provider == CloudMusicApiProviders.LoginStatus)
 				return HandleLoginStatusAsync();
 			else if (provider == CloudMusicApiProviders.RelatedPlaylist)
@@ -125,6 +127,24 @@ namespace NeteaseCloudMusicApi {
 				{ "message", playable ? "ok" : "亲爱的,暂无版权"}
 			};
 			return (true, result);
+		}
+
+		private async Task<(bool, JObject)> HandleLoginAsync(Dictionary<string, string> queries) {
+			CloudMusicApiProvider provider;
+			bool isOk;
+			JObject json;
+
+			provider = CloudMusicApiProviders.Login;
+			(isOk, json) = await RequestAsync(provider.Method, provider.Url(queries), provider.Data(queries), provider.Options);
+			if (!isOk)
+				return (false, null);
+			if ((int?)json["code"] == 502)
+				json = new JObject {
+					{ "msg", "账号或密码错误" },
+					{ "code", 502 },
+					{ "message", "账号或密码错误" }
+				};
+			return (isOk, json);
 		}
 
 		private async Task<(bool, JObject)> HandleLoginStatusAsync() {
