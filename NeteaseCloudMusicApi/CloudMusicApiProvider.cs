@@ -793,7 +793,7 @@ namespace NeteaseCloudMusicApi {
 		/// <summary>
 		/// mv 地址
 		/// </summary>
-		public static readonly CloudMusicApiProvider MvUrl = new CloudMusicApiProvider("/mv/url", HttpMethod.Post, q => "https://interface.music.163.com/weapi/mv/first", new ParameterInfo[] {
+		public static readonly CloudMusicApiProvider MvUrl = new CloudMusicApiProvider("/mv/url", HttpMethod.Post, q => "https://music.163.com/weapi/song/enhance/play/mv/url", new ParameterInfo[] {
 			new ParameterInfo("id"),
 			new ParameterInfo("r", ParameterType.Optional, "1080") { KeyForwarding = "res" }
 		}, BuildOptions("weapi"));
