@@ -778,7 +778,7 @@ namespace NeteaseCloudMusicApi {
 		/// </summary>
 		public static readonly CloudMusicApiProvider MvSub = new CloudMusicApiProvider("/mv/sub", HttpMethod.Post, q => $"https://music.163.com/weapi/mv/{(q["t"] == "1" ? "sub" : "unsub")}", new ParameterInfo[] {
 			new ParameterInfo("mvId") { KeyForwarding = "mvid" },
-			new ParameterInfo("mvIds") { KeyForwarding = "mvid", Transformer = JsonArrayTransformer }
+			new ParameterInfo("mvIds") { KeyForwarding = "mvid", Transformer = JsonArrayTransformer2 }
 		}, BuildOptions("weapi"));
 
 		/// <summary>
@@ -1062,7 +1062,7 @@ namespace NeteaseCloudMusicApi {
 		/// 发送私信(带歌单)
 		/// </summary>
 		public static readonly CloudMusicApiProvider SendPlaylist = new CloudMusicApiProvider("/send/playlist", HttpMethod.Post, q => "https://music.163.com/weapi/msg/private/send", new ParameterInfo[] {
-			new ParameterInfo("userIds") { Transformer = JsonArrayTransformer },
+			new ParameterInfo("userIds") { KeyForwarding = "user_ids", Transformer = JsonArrayTransformer },
 			new ParameterInfo("msg"),
 			new ParameterInfo("id", ParameterType.Optional, string.Empty) { KeyForwarding = "playlist" },
 			new ParameterInfo("type", ParameterType.Constant, "playlist")
@@ -1072,7 +1072,7 @@ namespace NeteaseCloudMusicApi {
 		/// 发送私信
 		/// </summary>
 		public static readonly CloudMusicApiProvider SendText = new CloudMusicApiProvider("/send/text", HttpMethod.Post, q => "https://music.163.com/weapi/msg/private/send", new ParameterInfo[] {
-			new ParameterInfo("userIds") { Transformer = JsonArrayTransformer },
+			new ParameterInfo("userIds") { KeyForwarding = "user_ids", Transformer = JsonArrayTransformer },
 			new ParameterInfo("msg"),
 			new ParameterInfo("id", ParameterType.Optional, string.Empty) { KeyForwarding = "playlist" },
 			new ParameterInfo("type", ParameterType.Constant, "text")
@@ -1373,7 +1373,7 @@ namespace NeteaseCloudMusicApi {
 		/// 获取视频播放地址
 		/// </summary>
 		public static readonly CloudMusicApiProvider VideoUrl = new CloudMusicApiProvider("/video/url", HttpMethod.Post, q => "https://music.163.com/weapi/cloudvideo/playurl", new ParameterInfo[] {
-			new ParameterInfo("ids") { KeyForwarding = "id", Transformer = JsonArrayTransformer },
+			new ParameterInfo("ids") { KeyForwarding = "id", Transformer = JsonArrayTransformer2 },
 			new ParameterInfo("resolution", ParameterType.Optional, "1080") { KeyForwarding = "res" }
 		}, BuildOptions("weapi"));
 
@@ -1413,6 +1413,10 @@ namespace NeteaseCloudMusicApi {
 
 		private static string JsonArrayTransformer(string value) {
 			return "[" + value.Replace(" ", string.Empty) + "]";
+		}
+
+		private static string JsonArrayTransformer2(string value) {
+			return "[\"" + value.Replace(" ", string.Empty) + "\"]";
 		}
 
 		private static string BannerTypeTransformer(string type) {
