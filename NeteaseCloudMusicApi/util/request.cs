@@ -31,18 +31,16 @@ namespace NeteaseCloudMusicApi.util {
 			"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36 Edge/13.10586"
 		};
 
-		public static string chooseUserAgent(string ua) {
-			switch (ua) {
-			case "mobile":
-				return userAgentList[(int)Math.Floor(new Random().NextDouble() * 7)];
-			case "pc":
-				return userAgentList[(int)Math.Floor(new Random().NextDouble() * 5) + 8];
-			default:
-				return string.IsNullOrEmpty(ua) ? userAgentList[(int)Math.Floor(new Random().NextDouble() * userAgentList.Length)] : ua;
-			}
+		public static string chooseUserAgent(string? ua) {
+			return ua switch
+			{
+				"mobile" => userAgentList[(int)Math.Floor(new Random().NextDouble() * 7)],
+				"pc" => userAgentList[(int)Math.Floor(new Random().NextDouble() * 5) + 8],
+				_ => string.IsNullOrEmpty(ua) ? userAgentList[(int)Math.Floor(new Random().NextDouble() * userAgentList.Length)] : ua,
+			};
 		}
 
-		public static async Task<(bool, JObject)> createRequest(HttpClient client, HttpMethod method, string url, IEnumerable<KeyValuePair<string, string>> data_, options options) {
+		public static async Task<(bool, JObject?)> createRequest(HttpClient client, HttpMethod method, string url, IEnumerable<KeyValuePair<string, string?>> data_, options options) {
 			if (client is null)
 				throw new ArgumentNullException(nameof(client));
 			if (method is null)
@@ -55,9 +53,9 @@ namespace NeteaseCloudMusicApi.util {
 				throw new ArgumentNullException(nameof(options));
 
 			Dictionary<string, string> headers;
-			Dictionary<string, string> data;
-			JObject answer;
-			HttpResponseMessage response;
+			Dictionary<string, string?> data;
+			JObject? answer;
+			HttpResponseMessage? response;
 
 			headers = new Dictionary<string, string> {
 				["User-Agent"] = chooseUserAgent(options.ua),
@@ -67,22 +65,26 @@ namespace NeteaseCloudMusicApi.util {
 				headers["Content-Type"] = "application/x-www-form-urlencoded";
 			if (url.Contains("music.163.com"))
 				headers["Referer"] = "https://music.163.com";
-			data = new Dictionary<string, string>();
-			foreach (KeyValuePair<string, string> item in data_)
+			data = new Dictionary<string, string?>();
+			foreach (KeyValuePair<string, string?> item in data_)
 				data.Add(item.Key, item.Value);
 			switch (options.crypto) {
 			case "weapi": {
 					data["csrf_token"] = options.cookie["__csrf"]?.Value ?? string.Empty;
+#pragma warning disable CS8619
 					data = crypto.weapi(data);
+#pragma warning restore CS8619
 					url = Regex.Replace(url, @"\w*api", "weapi");
 					break;
 				}
 			case "linuxapi": {
+#pragma warning disable CS8619
 					data = crypto.linuxapi(new Dictionary<string, object> {
 						{ "method", method.Method },
 						{ "url", Regex.Replace(url, @"\w*api", "api") },
 						{ "params", data }
 					});
+#pragma warning restore CS8619
 					headers["User-Agent"] = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.90 Safari/537.36";
 					url = "https://music.163.com/api/linux/forward";
 					break;
@@ -115,7 +117,11 @@ namespace NeteaseCloudMusicApi.util {
 						header["MUSIC_A"] = cookie["MUSIC_A"].Value;
 					headers["Cookie"] = string.Join("; ", header.Select(t => Uri.EscapeDataString(t.Key) + "=" + Uri.EscapeDataString(t.Value)));
 					data["header"] = JsonConvert.SerializeObject(header);
+					if (options.url is null)
+						throw new ArgumentNullException(nameof(util.options.url));
+#pragma warning disable CS8619
 					data = crypto.eapi(options.url, data);
+#pragma warning restore CS8619
 					url = Regex.Replace(url, @"\w*api", "eapi");
 					break;
 				}
@@ -138,7 +144,7 @@ namespace NeteaseCloudMusicApi.util {
 					temp1 = Array.Empty<string>();
 				answer["cookie"] = new JArray(temp1.Select(x => Regex.Replace(x, @"\s*Domain=[^(;|$)]+;*", string.Empty)).Where(x => !string.IsNullOrEmpty(x)).ToList());
 				if (options.crypto == "eapi") {
-					DeflateStream stream;
+					DeflateStream? stream;
 					byte[] buffer;
 
 					stream = null;
@@ -186,21 +192,21 @@ namespace NeteaseCloudMusicApi.util {
 				response?.Dispose();
 			}
 
-			ulong GetCurrentTotalSeconds() {
+			static ulong GetCurrentTotalSeconds() {
 				TimeSpan _timeSpan;
 
 				_timeSpan = DateTime.UtcNow - new DateTime(1970, 1, 1);
 				return (ulong)_timeSpan.TotalSeconds;
 			}
 
-			ulong GetCurrentTotalMilliseconds() {
+			static ulong GetCurrentTotalMilliseconds() {
 				TimeSpan _timeSpan;
 
 				_timeSpan = DateTime.UtcNow - new DateTime(1970, 1, 1);
 				return (ulong)_timeSpan.TotalMilliseconds;
 			}
 
-			byte[] ReadStream(Stream _stream) {
+			static byte[] ReadStream(Stream _stream) {
 				byte[] _buffer;
 				List<byte> _byteList;
 

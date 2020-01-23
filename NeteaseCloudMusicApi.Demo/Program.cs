@@ -35,7 +35,7 @@ namespace NeteaseCloudMusicApi.Demo {
 					} while (!isOk);
 					Console.WriteLine("登录成功");
 					Console.WriteLine();
-
+					// TODO FmTrash和Lyric接口的query放到ParameterInfo里面
 					/******************** 登录 ********************/
 
 					/******************** 获取账号信息 ********************/

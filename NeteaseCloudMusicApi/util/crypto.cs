@@ -59,7 +59,7 @@ namespace NeteaseCloudMusicApi.util {
 			return aesDecrypt(cipherBuffer, CipherMode.ECB, eapiKey, null);
 		}
 
-		private static byte[] aesEncrypt(byte[] buffer, CipherMode mode, byte[] key, byte[] iv) {
+		private static byte[] aesEncrypt(byte[] buffer, CipherMode mode, byte[] key, byte[]? iv) {
 			using (Aes aes = Aes.Create()) {
 				aes.BlockSize = 128;
 				aes.Key = key;
@@ -71,7 +71,7 @@ namespace NeteaseCloudMusicApi.util {
 			}
 		}
 
-		private static byte[] aesDecrypt(byte[] buffer, CipherMode mode, byte[] key, byte[] iv) {
+		private static byte[] aesDecrypt(byte[] buffer, CipherMode mode, byte[] key, byte[]? iv) {
 			using (Aes aes = Aes.Create()) {
 				aes.BlockSize = 128;
 				aes.Key = key;
@@ -91,7 +91,7 @@ namespace NeteaseCloudMusicApi.util {
 			rsaParameters = _cachedPublicKey.Value;
 			return BigInteger.ModPow(GetBigIntegerBigEndian(buffer), GetBigIntegerBigEndian(rsaParameters.Exponent), GetBigIntegerBigEndian(rsaParameters.Modulus)).ToByteArray(true, true);
 
-			RSAParameters ParsePublicKey(string _publicKey) {
+			static RSAParameters ParsePublicKey(string _publicKey) {
 				_publicKey = _publicKey.Replace("\n", string.Empty);
 				_publicKey = _publicKey.Substring(26, _publicKey.Length - 50);
 				using (MemoryStream _stream = new MemoryStream(Convert.FromBase64String(_publicKey))) {
@@ -162,7 +162,7 @@ namespace NeteaseCloudMusicApi.util {
 				}
 			}
 
-			BigInteger GetBigIntegerBigEndian(byte[] _value) {
+			static BigInteger GetBigIntegerBigEndian(byte[] _value) {
 				return new BigInteger(new ReadOnlySpan<byte>(_value), true, true);
 			}
 		}

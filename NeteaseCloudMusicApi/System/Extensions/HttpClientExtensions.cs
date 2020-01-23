@@ -10,15 +10,15 @@ namespace System.Extensions {
 			return client.SendAsync(method, url, null, null);
 		}
 
-		public static Task<HttpResponseMessage> SendAsync(this HttpClient client, HttpMethod method, string url, IEnumerable<KeyValuePair<string, string>> queries, IEnumerable<KeyValuePair<string, string>> headers) {
-			return client.SendAsync(method, url, queries, headers, (byte[])null, "application/x-www-form-urlencoded");
+		public static Task<HttpResponseMessage> SendAsync(this HttpClient client, HttpMethod method, string url, IEnumerable<KeyValuePair<string, string>>? queries, IEnumerable<KeyValuePair<string, string>>? headers) {
+			return client.SendAsync(method, url, queries, headers, (byte[]?)null, "application/x-www-form-urlencoded");
 		}
 
-		public static Task<HttpResponseMessage> SendAsync(this HttpClient client, HttpMethod method, string url, IEnumerable<KeyValuePair<string, string>> queries, IEnumerable<KeyValuePair<string, string>> headers, string content, string contentType) {
+		public static Task<HttpResponseMessage> SendAsync(this HttpClient client, HttpMethod method, string url, IEnumerable<KeyValuePair<string, string>>? queries, IEnumerable<KeyValuePair<string, string>>? headers, string? content, string contentType) {
 			return client.SendAsync(method, url, queries, headers, content is null ? null : Encoding.UTF8.GetBytes(content), contentType);
 		}
 
-		public static Task<HttpResponseMessage> SendAsync(this HttpClient client, HttpMethod method, string url, IEnumerable<KeyValuePair<string, string>> queries, IEnumerable<KeyValuePair<string, string>> headers, byte[] content, string contentType) {
+		public static Task<HttpResponseMessage> SendAsync(this HttpClient client, HttpMethod method, string url, IEnumerable<KeyValuePair<string, string>>? queries, IEnumerable<KeyValuePair<string, string>>? headers, byte[]? content, string contentType) {
 			if (client is null)
 				throw new ArgumentNullException(nameof(client));
 			if (method is null)
