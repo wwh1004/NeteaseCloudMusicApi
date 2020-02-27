@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Title>NeteaseCloudMusicApi.Light</Title>
+    <Product>NeteaseCloudMusicApi.Light</Product>
+    <Description>网易云音乐 API</Description>
+    <Copyright>Copyright © 2019 Binaryify / Wwh</Copyright>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <AssemblyOriginatorKeyFile>../NeteaseCloudMusicApi.snk</AssemblyOriginatorKeyFile>
+    <SignAssembly>true</SignAssembly>
+    <NoWarn>IDE1006;CS0436;CS3021</NoWarn>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <OutputPath>..\bin\$(Configuration)</OutputPath>
+    <LangVersion>7.3</LangVersion>
+    <PackageId>NeteaseCloudMusicApi.Light</PackageId>
+    <Authors>Binaryify / Wwh</Authors>
+    <PackageVersion>1.0.0.0</PackageVersion>
+    <PackageProjectUrl>https://github.com/wwh1004/NeteaseCloudMusicApi</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <IncludeSymbols>true</IncludeSymbols>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
+    <PackageReference Include="System.Memory" Version="4.5.3" />
+  </ItemGroup>
+</Project>
