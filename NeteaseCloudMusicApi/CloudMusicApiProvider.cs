@@ -96,9 +96,9 @@ namespace NeteaseCloudMusicApi {
 		}
 
 		internal enum ParameterType {
-			Required,
-			Optional,
-			Constant,
+			Required, // 必选参数
+			Optional, // 可选参数
+			Constant, // 常量
 			SpecialHandle
 		}
 
@@ -1376,6 +1376,117 @@ namespace NeteaseCloudMusicApi {
 			new ParameterInfo("ids") { KeyForwarding = "id", Transformer = JsonArrayTransformer2 },
 			new ParameterInfo("resolution", ParameterType.Optional, "1080") { KeyForwarding = "res" }
 		}, BuildOptions("weapi"));
+
+		/// <summary>
+		/// 购买数字专辑
+		/// </summary>
+		public static readonly CloudMusicApiProvider OrderDigitalAlbum = new CloudMusicApiProvider("/digitalAlbum/ordering", HttpMethod.Post, q => "https://music.163.com/api/ordering/web/digital",
+			new ParameterInfo[] {
+				new ParameterInfo("business",ParameterType.Constant,"Album"),
+				new ParameterInfo("paymentMethod",ParameterType.Required,"0"){ KeyForwarding = "payment" },
+				new ParameterInfo("digitalResources",ParameterType.SpecialHandle,null) {
+					SpecialHandler = q => JsonConvert.SerializeObject(new QueryCollection {
+						{ "business" , "Album" },
+						{ "resourceID" , q["id"] },
+						{"quantity",q["quantity"] }
+					})
+				}
+			},
+		BuildOptions("weapi"));
+
+		/// <summary>
+		/// 获取 mv 点赞转发评论数数据
+		/// </summary>
+		public static readonly CloudMusicApiProvider MvDetailInfo = new CloudMusicApiProvider("/mv/detail/info", HttpMethod.Post, q => "https://music.163.com/api/comment/commentthread/info", new ParameterInfo[] {
+			new ParameterInfo("threadid", ParameterType.SpecialHandle, null) {
+				SpecialHandler = q => "R_MV_5_"+q["mvid"]
+			},
+			new ParameterInfo("composeliked",ParameterType.Constant,"true")
+		}, BuildOptions("weapi"));
+
+		/// <summary>
+		/// 获取 mv 点赞转发评论数数据
+		/// </summary>
+		public static readonly CloudMusicApiProvider VideoDetailInfo = new CloudMusicApiProvider("/video/detail/info", HttpMethod.Post, q => "https://music.163.com/api/comment/commentthread/info", new ParameterInfo[] {
+			new ParameterInfo("threadid", ParameterType.SpecialHandle, null) {
+				SpecialHandler = q => "R_VI_62_"+q["vid"]
+			},
+			new ParameterInfo("composeliked",ParameterType.Constant,"true")
+		}, BuildOptions("weapi"));
+
+		/// <summary>
+		/// 调整歌单顺序
+		/// </summary>
+		public static readonly CloudMusicApiProvider PlaylistOrderUpdate = new CloudMusicApiProvider("/playlist/order/update", HttpMethod.Post, q => "https://music.163.com/api/playlist/order/update", new ParameterInfo[] {
+			new ParameterInfo("ids") { Transformer = JsonArrayTransformer2 }
+		}, BuildOptions("weapi", new Cookie[] { new Cookie("os", "pc") }));
+
+		/// <summary>
+		/// 调整歌曲顺序
+		/// </summary>
+		public static readonly CloudMusicApiProvider SongOrderUpdate = new CloudMusicApiProvider("/song/order/update", HttpMethod.Post, q => "https://interface.music.163.com/api/playlist/manipulate/tracks", new ParameterInfo[] {
+			new ParameterInfo("pid"),
+			new ParameterInfo("ids") { Transformer = JsonArrayTransformer2 }
+		}, BuildOptions("weapi", new Cookie[] { new Cookie("os", "pc") }));
+
+		/// <summary>
+		/// 独家放送列表
+		/// </summary>
+		public static readonly CloudMusicApiProvider PersonalizedPrivatecontentList = new CloudMusicApiProvider("/personalized/privatecontent/list", HttpMethod.Post, q => "https://music.163.com/api/v2/privatecontent/list", new ParameterInfo[] {
+			new ParameterInfo("limit", ParameterType.Optional, "60"),
+			new ParameterInfo("offset", ParameterType.Optional, "0"),
+			new ParameterInfo("total",ParameterType.Constant,"true")
+		}, BuildOptions("weapi"));
+
+		/// <summary>
+		/// 获取推荐视频
+		/// </summary>
+		public static readonly CloudMusicApiProvider VideoTimelineRecommend = new CloudMusicApiProvider("/video/timeline/recommend", HttpMethod.Post, q => "https://music.163.com/api/videotimeline/get", new ParameterInfo[] {
+			new ParameterInfo("offset", ParameterType.Optional, "0"),
+			new ParameterInfo("filterLives",ParameterType.Constant,"[]"),
+			new ParameterInfo("withProgramInfo",ParameterType.Constant,"true"),
+			new ParameterInfo("needUrl",ParameterType.Constant,"1"),
+			new ParameterInfo("resolution",ParameterType.Constant,"480")
+		}, BuildOptions("weapi"));
+
+		/// <summary>
+		/// 获取视频分类列表
+		/// </summary>
+		public static readonly CloudMusicApiProvider VideoCategoryList = new CloudMusicApiProvider("/video/category/list", HttpMethod.Post, q => "https://music.163.com/api/videotimeline/get", new ParameterInfo[] {
+			new ParameterInfo("offset", ParameterType.Optional, "0"),
+			new ParameterInfo("total",ParameterType.Constant,"true"),
+			new ParameterInfo("limit",ParameterType.Optional,"99")
+		}, BuildOptions("weapi"));
+
+		/// <summary>
+		/// 获取全部视频列表接口
+		/// </summary>
+		public static readonly CloudMusicApiProvider VideoTimelineAll = new CloudMusicApiProvider("/video/timeline/all", HttpMethod.Post, q => "https://music.163.com/api/videotimeline/otherclient/get", new ParameterInfo[] {
+			new ParameterInfo("groupId", ParameterType.Constant, "0"),
+			new ParameterInfo("offset", ParameterType.Optional, "0"),
+			new ParameterInfo("need_preview_url",ParameterType.Constant,"true"),
+			new ParameterInfo("total",ParameterType.Constant,"true")
+		}, BuildOptions("weapi"));
+
+		/// <summary>
+		/// 获取历史日推可用日期列表
+		/// </summary>
+		public static readonly CloudMusicApiProvider HistoryRecommendSongs = new CloudMusicApiProvider("/history/recommend/songs", HttpMethod.Post, q => "https://music.163.com/api/discovery/recommend/songs/history/recent", new ParameterInfo[] { }, BuildOptions("weapi", new Cookie[] { new Cookie("os", "ios") }));
+
+		/// <summary>
+		/// 获取历史日推详细数据
+		/// </summary>
+		public static readonly CloudMusicApiProvider HistoryRecommendSongsDetail = new CloudMusicApiProvider("/history/recommend/songs/detail", HttpMethod.Post, q => "https://music.163.com/api/discovery/recommend/songs/history/detail", new ParameterInfo[] {
+			new ParameterInfo("date")
+		},BuildOptions("weapi", new Cookie[] { new Cookie("os", "ios") }));
+
+		/// <summary>
+		/// 国家编码列表
+		/// </summary>
+		public static readonly CloudMusicApiProvider CountriesCodeList = new CloudMusicApiProvider("/countries/code/list", HttpMethod.Post, q => "https://interface3.music.163.com/eapi/lbs/countries/v1", new ParameterInfo[] {},BuildOptions("eapi", null,null, "/api/lbs/countries/v1"));
+
+
+
 
 		/// <summary>
 		/// 操作记录 （无文档）
