@@ -77,7 +77,7 @@ namespace NeteaseCloudMusicApi.util {
 					url = Regex.Replace(url, @"\w*api", "weapi");
 					break;
 				}
-			case "linuxapi": {
+			case "api": {
 					data = crypto.linuxapi(new Dictionary<string, object> {
 						{ "method", method.Method },
 						{ "url", Regex.Replace(url, @"\w*api", "api") },
