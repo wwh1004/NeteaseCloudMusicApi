@@ -1452,7 +1452,7 @@ namespace NeteaseCloudMusicApi {
 		/// <summary>
 		/// 获取视频分类列表
 		/// </summary>
-		public static readonly CloudMusicApiProvider VideoCategoryList = new CloudMusicApiProvider("/video/category/list", HttpMethod.Post, q => "https://music.163.com/api/videotimeline/get", new ParameterInfo[] {
+		public static readonly CloudMusicApiProvider VideoCategoryList = new CloudMusicApiProvider("/video/category/list", HttpMethod.Post, q => "https://music.163.com/api/cloudvideo/category/list", new ParameterInfo[] {
 			new ParameterInfo("offset", ParameterType.Optional, "0"),
 			new ParameterInfo("total",ParameterType.Constant,"true"),
 			new ParameterInfo("limit",ParameterType.Optional,"99")
@@ -1485,7 +1485,19 @@ namespace NeteaseCloudMusicApi {
 		/// </summary>
 		public static readonly CloudMusicApiProvider CountriesCodeList = new CloudMusicApiProvider("/countries/code/list", HttpMethod.Post, q => "https://interface3.music.163.com/eapi/lbs/countries/v1", new ParameterInfo[] {},BuildOptions("eapi", null,null, "/api/lbs/countries/v1"));
 
+		/// <summary>
+		/// 首页-发现
+		/// </summary>
+		public static readonly CloudMusicApiProvider HomepageBlockPage = new CloudMusicApiProvider("/homepage/block/page", HttpMethod.Post, q => "https://music.163.com/api/homepage/block/page", new ParameterInfo[] {
+			new ParameterInfo("refresh", ParameterType.Optional, "true")
+		}, BuildOptions("weapi",new Cookie[] { new Cookie("os", "ios") , new Cookie("appver", "8.0.00") }));
 
+		/// <summary>
+		/// 首页-发现-圆形图标入口列表    --  不完善 原项目干了点迷惑操作
+		/// </summary>
+		public static readonly CloudMusicApiProvider HomepageDragonBall = new CloudMusicApiProvider("/homepage/dragon/ball", HttpMethod.Post, q => "https://music.163.com/eapi/homepage/dragon/ball/static", new ParameterInfo[] {
+			new ParameterInfo("refresh", ParameterType.Optional, "true")
+		}, BuildOptions("eapi",new Cookie[] { new Cookie("os", "ios") , new Cookie("appver", "8.0.00") },null, "/api/homepage/dragon/ball/static"));
 
 
 		/// <summary>
