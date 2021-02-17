@@ -21,7 +21,7 @@ GitHub:
 
 [NeteaseCloudMusicApi.Demo-net472.zip（.NET Framework版Demo）](https://github.com/wwh1004/NeteaseCloudMusicApi/releases/latest/download/NeteaseCloudMusicApi.Demo-net472.zip)
 
-[NeteaseCloudMusicApi.Demo-netcoreapp2.1.zip（.NET Core版Demo）](https://github.com/wwh1004/NeteaseCloudMusicApi/releases/latest/download/NeteaseCloudMusicApi.Demo-netcoreapp2.1.zip)
+[NeteaseCloudMusicApi.Demo-netcoreapp3.1.zip（.NET Core版Demo）](https://github.com/wwh1004/NeteaseCloudMusicApi/releases/latest/download/NeteaseCloudMusicApi.Demo-netcoreapp3.1.zip)
 
 ## 功能特性
 

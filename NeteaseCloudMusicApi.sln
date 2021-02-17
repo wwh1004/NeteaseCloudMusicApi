@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.28917.182
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NeteaseCloudMusicApi", "NeteaseCloudMusicApi\NeteaseCloudMusicApi.csproj", "{D3A89277-E87D-4D6D-9B88-B7C80F07CC48}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NeteaseCloudMusicApi.Demo", "NeteaseCloudMusicApi.Demo\NeteaseCloudMusicApi.Demo.csproj", "{B66EE956-52D6-4067-A08F-289BD816824D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NeteaseCloudMusicApi.Demo", "NeteaseCloudMusicApi.Demo\NeteaseCloudMusicApi.Demo.csproj", "{B66EE956-52D6-4067-A08F-289BD816824D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
