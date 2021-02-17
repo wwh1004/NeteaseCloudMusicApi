@@ -8,7 +8,7 @@ using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using NeteaseCloudMusicApi.util;
+using NeteaseCloudMusicApi.Utils;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -90,7 +90,7 @@ namespace NeteaseCloudMusicApi {
 			return RequestAsync(provider.Method, provider.Url(queries), provider.Data(queries), provider.Options);
 		}
 
-		private async Task<(bool, JObject)> RequestAsync(HttpMethod method, string url, IEnumerable<KeyValuePair<string, string>> data, options options) {
+		private async Task<(bool, JObject)> RequestAsync(HttpMethod method, string url, IEnumerable<KeyValuePair<string, string>> data, Options options) {
 			if (method is null)
 				throw new ArgumentNullException(nameof(method));
 			if (url is null)
@@ -100,7 +100,10 @@ namespace NeteaseCloudMusicApi {
 			if (options is null)
 				throw new ArgumentNullException(nameof(options));
 
-			var (isOk, json) = await request.createRequest(_client, method.Method, url, data, options);
+			var data2 = new Dictionary<string, string>();
+			foreach (var item in data)
+				data2.Add(item.Key, item.Value);
+			var (isOk, json) = await Utils.Request.CreateRequest(_client, method.Method, url, data2, options);
 			json = (JObject)json["body"];
 			if (!isOk && (int?)json["code"] == 301)
 				json["msg"] = "需要登录";
@@ -166,7 +169,7 @@ namespace NeteaseCloudMusicApi {
 
 		private async Task<(bool, JObject)> HandleRelatedPlaylistAsync(Dictionary<string, string> queries) {
 			try {
-				using var response = await _client.SendAsync("https://music.163.com/playlist", HttpMethod.Get, new QueryCollection { { "id", queries["id"] } }, new QueryCollection { { "User-Agent", request.chooseUserAgent("pc") } });
+				using var response = await _client.SendAsync("https://music.163.com/playlist", HttpMethod.Get, new QueryCollection { { "id", queries["id"] } }, new QueryCollection { { "User-Agent", Utils.Request.ChooseUserAgent("pc") } });
 				string s = Encoding.UTF8.GetString(await response.Content.ReadAsByteArrayAsync());
 				var matchs = Regex.Matches(s, @"<div class=""cver u-cover u-cover-3"">[\s\S]*?<img src=""([^""]+)"">[\s\S]*?<a class=""sname f-fs1 s-fc0"" href=""([^""]+)""[^>]*>([^<]+?)<\/a>[\s\S]*?<a class=""nm nm f-thide s-fc3"" href=""([^""]+)""[^>]*>([^<]+?)<\/a>");
 				var playlists = new JArray(matchs.Cast<Match>().Select(match => new JObject {
@@ -193,11 +196,10 @@ namespace NeteaseCloudMusicApi {
 
 		/// <summary />
 		public void Dispose() {
-			if (_isDisposed)
-				return;
-			_clientHandler.Dispose();
-			_client.Dispose();
-			_isDisposed = true;
+			if (!_isDisposed) {
+				_client.Dispose();
+				_isDisposed = true;
+			}
 		}
 	}
 }

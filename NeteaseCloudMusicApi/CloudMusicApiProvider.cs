@@ -4,7 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text.RegularExpressions;
-using NeteaseCloudMusicApi.util;
+using NeteaseCloudMusicApi.Utils;
 using Newtonsoft.Json;
 using static NeteaseCloudMusicApi.CloudMusicApiProvider;
 
@@ -18,7 +18,7 @@ namespace NeteaseCloudMusicApi {
 		private readonly string _route;
 		private readonly ParameterInfo[] _parameterInfos;
 		private readonly HttpMethod _method;
-		private readonly options _options;
+		private readonly Options _options;
 		private readonly Func<Dictionary<string, string>, string> _url;
 		private Func<Dictionary<string, string>, IEnumerable<KeyValuePair<string, string>>> _dataProvider;
 
@@ -31,7 +31,7 @@ namespace NeteaseCloudMusicApi {
 
 		internal Func<Dictionary<string, string>, IEnumerable<KeyValuePair<string, string>>> Data => _dataProvider ?? GetData;
 
-		internal options Options => _options;
+		internal Options Options => _options;
 
 		internal Func<Dictionary<string, string>, IEnumerable<KeyValuePair<string, string>>> DataProvider {
 			get => _dataProvider;
@@ -45,7 +45,7 @@ namespace NeteaseCloudMusicApi {
 			_route = name;
 		}
 
-		internal CloudMusicApiProvider(string name, HttpMethod method, Func<Dictionary<string, string>, string> url, ParameterInfo[] parameterInfos, options options) {
+		internal CloudMusicApiProvider(string name, HttpMethod method, Func<Dictionary<string, string>, string> url, ParameterInfo[] parameterInfos, Options options) {
 			if (string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
 			if (method is null)
@@ -1381,28 +1381,28 @@ namespace NeteaseCloudMusicApi {
 		/// </summary>
 		public static readonly CloudMusicApiProvider Weblog = new CloudMusicApiProvider("/weblog", HttpMethod.Post, q => "https://music.163.com/weapi/feedback/weblog", Array.Empty<ParameterInfo>(), BuildOptions("weapi"));
 
-		private static options BuildOptions(string crypto) {
+		private static Options BuildOptions(string crypto) {
 			return BuildOptions(crypto, null);
 		}
 
-		private static options BuildOptions(string crypto, IEnumerable<Cookie> cookies) {
+		private static Options BuildOptions(string crypto, IEnumerable<Cookie> cookies) {
 			return BuildOptions(crypto, cookies, null);
 		}
 
-		private static options BuildOptions(string crypto, IEnumerable<Cookie> cookies, string ua) {
+		private static Options BuildOptions(string crypto, IEnumerable<Cookie> cookies, string ua) {
 			return BuildOptions(crypto, cookies, ua, null);
 		}
 
-		private static options BuildOptions(string crypto, IEnumerable<Cookie> cookies, string ua, string url) {
+		private static Options BuildOptions(string crypto, IEnumerable<Cookie> cookies, string ua, string url) {
 			var cookieCollection = new CookieCollection();
 			if (!(cookies is null))
 				foreach (var cookie in cookies)
 					cookieCollection.Add(cookie);
-			var options = new options {
-				crypto = crypto,
-				cookie = cookieCollection,
-				ua = ua,
-				url = url
+			var options = new Options {
+				Crypto = crypto,
+				Cookie = cookieCollection,
+				UA = ua,
+				Url = url
 			};
 			return options;
 		}
