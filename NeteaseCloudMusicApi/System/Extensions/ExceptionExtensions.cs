@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Text;
 
 namespace System.Extensions {
@@ -23,22 +24,24 @@ namespace System.Extensions {
 			if (exception is null)
 				throw new ArgumentNullException(nameof(exception));
 
-			StringBuilder sb;
-
-			sb = new StringBuilder();
+			var sb = new StringBuilder();
 			DumpException(exception, sb);
 			return sb.ToString();
 		}
 
 		private static void DumpException(Exception exception, StringBuilder sb) {
-			sb.AppendLine("Type: " + Environment.NewLine + exception.GetType().FullName);
-			sb.AppendLine("Message: " + Environment.NewLine + exception.Message);
-			sb.AppendLine("Source: " + Environment.NewLine + exception.Source);
-			sb.AppendLine("StackTrace: " + Environment.NewLine + exception.StackTrace);
-			sb.AppendLine("TargetSite: " + Environment.NewLine + exception.TargetSite.ToString());
+			sb.AppendLine($"Type: {Environment.NewLine}{exception.GetType().FullName}");
+			sb.AppendLine($"Message: {Environment.NewLine}{exception.Message}");
+			sb.AppendLine($"Source: {Environment.NewLine}{exception.Source}");
+			sb.AppendLine($"StackTrace: {Environment.NewLine}{exception.StackTrace}");
+			sb.AppendLine($"TargetSite: {Environment.NewLine}{exception.TargetSite}");
 			sb.AppendLine("----------------------------------------");
 			if (!(exception.InnerException is null))
 				DumpException(exception.InnerException, sb);
+			if (exception is ReflectionTypeLoadException reflectionTypeLoadException) {
+				foreach (var loaderException in reflectionTypeLoadException.LoaderExceptions)
+					DumpException(loaderException, sb);
+			}
 		}
 	}
 }

@@ -89,7 +89,7 @@ namespace System.Numerics {
 			// raised by a 32-bit integer...
 
 			int size = modulus.Length + modulus.Length;
-			BitsBuffer v = new BitsBuffer(size, value);
+			var v = new BitsBuffer(size, value);
 			return PowCore(power, modulus, ref v);
 		}
 
@@ -104,7 +104,7 @@ namespace System.Numerics {
 				value = Remainder(value, modulus);
 
 			int size = modulus.Length + modulus.Length;
-			BitsBuffer v = new BitsBuffer(size, value);
+			var v = new BitsBuffer(size, value);
 			return PowCore(power, modulus, ref v);
 		}
 
@@ -116,7 +116,7 @@ namespace System.Numerics {
 			// raised by a big integer...
 
 			int size = modulus.Length + modulus.Length;
-			BitsBuffer v = new BitsBuffer(size, value);
+			var v = new BitsBuffer(size, value);
 			return PowCore(power, modulus, ref v);
 		}
 
@@ -132,7 +132,7 @@ namespace System.Numerics {
 				value = Remainder(value, modulus);
 
 			int size = modulus.Length + modulus.Length;
-			BitsBuffer v = new BitsBuffer(size, value);
+			var v = new BitsBuffer(size, value);
 			return PowCore(power, modulus, ref v);
 		}
 
@@ -145,14 +145,14 @@ namespace System.Numerics {
 
 			int size = value.GetSize();
 
-			BitsBuffer temp = new BitsBuffer(size, 0);
-			BitsBuffer result = new BitsBuffer(size, 1);
+			var temp = new BitsBuffer(size, 0);
+			var result = new BitsBuffer(size, 1);
 
 			if (modulus.Length < ReducerThreshold) {
 				PowCore(power, modulus, ref value, ref result, ref temp);
 			}
 			else {
-				FastReducer reducer = new FastReducer(modulus);
+				var reducer = new FastReducer(modulus);
 				PowCore(power, ref reducer, ref value, ref result, ref temp);
 			}
 
@@ -165,14 +165,14 @@ namespace System.Numerics {
 
 			int size = value.GetSize();
 
-			BitsBuffer temp = new BitsBuffer(size, 0);
-			BitsBuffer result = new BitsBuffer(size, 1);
+			var temp = new BitsBuffer(size, 0);
+			var result = new BitsBuffer(size, 1);
 
 			if (modulus.Length < ReducerThreshold) {
 				PowCore(power, modulus, ref value, ref result, ref temp);
 			}
 			else {
-				FastReducer reducer = new FastReducer(modulus);
+				var reducer = new FastReducer(modulus);
 				PowCore(power, ref reducer, ref value, ref result, ref temp);
 			}
 

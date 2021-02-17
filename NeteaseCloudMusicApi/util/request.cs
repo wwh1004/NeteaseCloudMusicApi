@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Extensions;
-using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -42,7 +40,7 @@ namespace NeteaseCloudMusicApi.util {
 			}
 		}
 
-		public static async Task<(bool, JObject)> createRequest(HttpClient client, HttpMethod method, string url, IEnumerable<KeyValuePair<string, string>> data_, options options) {
+		public static async Task<(bool, JObject)> createRequest(HttpClient client, string method, string url, IEnumerable<KeyValuePair<string, string>> data_, options options) {
 			if (client is null)
 				throw new ArgumentNullException(nameof(client));
 			if (method is null)
@@ -54,107 +52,79 @@ namespace NeteaseCloudMusicApi.util {
 			if (options is null)
 				throw new ArgumentNullException(nameof(options));
 
-			Dictionary<string, string> headers;
-			Dictionary<string, string> data;
-			JObject answer;
-			HttpResponseMessage response;
-
-			headers = new Dictionary<string, string> {
+			var headers = new Dictionary<string, string> {
 				["User-Agent"] = chooseUserAgent(options.ua),
 				["Cookie"] = string.Join("; ", options.cookie.Cast<Cookie>().Select(t => Uri.EscapeDataString(t.Name) + "=" + Uri.EscapeDataString(t.Value)))
 			};
-			if (method == HttpMethod.Post)
+			if (method.ToUpperInvariant() == "POST")
 				headers["Content-Type"] = "application/x-www-form-urlencoded";
 			if (url.Contains("music.163.com"))
 				headers["Referer"] = "https://music.163.com";
-			data = new Dictionary<string, string>();
-			foreach (KeyValuePair<string, string> item in data_)
+			var data = new Dictionary<string, string>();
+			foreach (var item in data_)
 				data.Add(item.Key, item.Value);
 			switch (options.crypto) {
 			case "weapi": {
-					data["csrf_token"] = options.cookie["__csrf"]?.Value ?? string.Empty;
-					data = crypto.weapi(data);
-					url = Regex.Replace(url, @"\w*api", "weapi");
-					break;
-				}
-			case "linuxapi": {
-					data = crypto.linuxapi(new Dictionary<string, object> {
-						{ "method", method.Method },
-						{ "url", Regex.Replace(url, @"\w*api", "api") },
-						{ "params", data }
-					});
-					headers["User-Agent"] = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.90 Safari/537.36";
-					url = "https://music.163.com/api/linux/forward";
-					break;
-				}
-			case "eapi": {
-					CookieCollection cookie;
-					string csrfToken;
-					Dictionary<string, string> header;
-
-					cookie = new CookieCollection();
-					foreach (Cookie item in options.cookie)
-						cookie.Add(new Cookie(item.Name, item.Value));
-					csrfToken = cookie["__csrf"]?.Value ?? string.Empty;
-					header = new Dictionary<string, string>() {
-						{ "osver", cookie["osver"]?.Value ?? string.Empty }, // 系统版本
-						{ "deviceId", cookie["deviceId"]?.Value ?? string.Empty }, // encrypt.base64.encode(imei + '\t02:00:00:00:00:00\t5106025eb79a5247\t70ffbaac7')
-						{ "appver", cookie["appver"]?.Value ?? "6.1.1" }, // app版本
-						{ "versioncode",  cookie["versioncode"]?.Value ?? "140" }, // 版本号
-						{ "mobilename", cookie["mobilename"]?.Value ?? string.Empty }, // 设备model
-						{ "buildver", cookie["buildver"]?.Value ?? GetCurrentTotalSeconds().ToString() },
-						{ "resolution", cookie["resolution"]?.Value ?? "1920x1080" }, // 设备分辨率
-						{ "__csrf", csrfToken },
-						{ "os", cookie["os"]?.Value ?? "android" },
-						{ "channel", cookie["channel"]?.Value ?? string.Empty },
-						{ "requestId", $"{GetCurrentTotalMilliseconds()}_{Math.Floor(new Random().NextDouble() * 1000).ToString().PadLeft(4, '0')}" }
-					};
-					if (!(cookie["MUSIC_U"] is null))
-						header["MUSIC_U"] = cookie["MUSIC_U"].Value;
-					if (!(cookie["MUSIC_A"] is null))
-						header["MUSIC_A"] = cookie["MUSIC_A"].Value;
-					headers["Cookie"] = string.Join("; ", header.Select(t => Uri.EscapeDataString(t.Key) + "=" + Uri.EscapeDataString(t.Value)));
-					data["header"] = JsonConvert.SerializeObject(header);
-					data = crypto.eapi(options.url, data);
-					url = Regex.Replace(url, @"\w*api", "eapi");
-					break;
-				}
+				data["csrf_token"] = options.cookie.Get("__csrf", string.Empty);
+				data = crypto.weapi(data);
+				url = Regex.Replace(url, @"\w*api", "weapi");
+				break;
 			}
-			answer = new JObject {
-				{ "status", 500 },
-				{ "body", null },
-				{ "cookie", null }
-			};
-			response = null;
+			case "linuxapi": {
+				data = crypto.linuxapi(new Dictionary<string, object> {
+					["method"] = method,
+					["url"] = Regex.Replace(url, @"\w*api", "api"),
+					["params"] = data
+				});
+				headers["User-Agent"] = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.90 Safari/537.36";
+				url = "https://music.163.com/api/linux/forward";
+				break;
+			}
+			case "eapi": {
+				var cookie = new CookieCollection();
+				foreach (Cookie item in options.cookie)
+					cookie.Add(new Cookie(item.Name, item.Value));
+				string csrfToken = cookie.Get("__csrf", string.Empty);
+				var header = new Dictionary<string, string>() {
+					["osver"] = cookie.Get("osver", string.Empty), // 系统版本
+					["deviceId"] = cookie.Get("deviceId", string.Empty), // encrypt.base64.encode(imei + '\t02:00:00:00:00:00\t5106025eb79a5247\t70ffbaac7')
+					["appver"] = cookie.Get("appver", "6.1.1"), // app版本
+					["versioncode"] = cookie.Get("versioncode", "140"), // 版本号
+					["mobilename"] = cookie.Get("mobilename", string.Empty), // 设备model
+					["buildver"] = cookie.Get("buildver", GetCurrentTotalSeconds().ToString()),
+					["resolution"] = cookie.Get("resolution", "1920x1080"), // 设备分辨率
+					["__csrf"] = csrfToken,
+					["os"] = cookie.Get("os", "android"),
+					["channel"] = cookie.Get("channel", string.Empty),
+					["requestId"] = $"{GetCurrentTotalMilliseconds()}_{Math.Floor(new Random().NextDouble() * 1000).ToString().PadLeft(4, '0')}"
+				};
+				if (!(cookie["MUSIC_U"] is null))
+					header["MUSIC_U"] = cookie["MUSIC_U"].Value;
+				if (!(cookie["MUSIC_A"] is null))
+					header["MUSIC_A"] = cookie["MUSIC_A"].Value;
+				headers["Cookie"] = string.Join("; ", header.Select(t => Uri.EscapeDataString(t.Key) + "=" + Uri.EscapeDataString(t.Value)));
+				data["header"] = JsonConvert.SerializeObject(header);
+				data = crypto.eapi(options.url, data);
+				url = Regex.Replace(url, @"\w*api", "eapi");
+				break;
+			}
+			}
 			try {
-				IEnumerable<string> temp1;
-				JValue temp2;
-				int temp3;
-
-				response = await client.SendAsync(method, url, null, headers, data.ToQueryString(), "application/x-www-form-urlencoded");
-				if (!response.IsSuccessStatusCode)
-					throw new HttpRequestException();
-				if (!response.Headers.TryGetValues("set-cookie", out temp1))
-					temp1 = Array.Empty<string>();
-				answer["cookie"] = new JArray(temp1.Select(x => Regex.Replace(x, @"\s*Domain=[^(;|$)]+;*", string.Empty)).Where(x => !string.IsNullOrEmpty(x)).ToList());
+				using var response = await client.SendAsync(url, method, headers, data);
+				response.EnsureSuccessStatusCode();
+				if (!response.Headers.TryGetValues("Set-Cookie", out var setCookie))
+					setCookie = Array.Empty<string>();
+				var answer = new JObject {
+					["status"] = 500,
+					["body"] = null,
+					["cookie"] = null
+				};
+				answer["cookie"] = new JArray(setCookie.Select(x => Regex.Replace(x, @"\s*Domain=[^(;|$)]+;*", string.Empty)).Where(x => !string.IsNullOrEmpty(x)).ToList());
 				if (options.crypto == "eapi") {
-					DeflateStream stream;
-					byte[] buffer;
-
-					stream = null;
-					try {
-						stream = new DeflateStream(await response.Content.ReadAsStreamAsync(), CompressionMode.Decompress);
-						buffer = ReadStream(stream);
-					}
-					catch {
-						buffer = await response.Content.ReadAsByteArrayAsync();
-					}
-					finally {
-						stream?.Dispose();
-					}
+					byte[] buffer = await response.Content.ReadAsByteArrayAsync();
 					try {
 						answer["body"] = JObject.Parse(Encoding.UTF8.GetString(crypto.decrypt(buffer)));
-						temp2 = (JValue)answer["body"]["code"];
+						var temp2 = (JValue)answer["body"]["code"];
 						answer["status"] = temp2 is null ? (int)response.StatusCode : (int)temp2;
 					}
 					catch {
@@ -164,61 +134,35 @@ namespace NeteaseCloudMusicApi.util {
 				}
 				else {
 					answer["body"] = JObject.Parse(await response.Content.ReadAsStringAsync());
-					temp2 = (JValue)answer["body"]["code"];
-					answer["status"] = temp2 is null ? (int)response.StatusCode : (int)temp2;
-					if (!(temp2 is null) && (int)temp2 == 502)
+					var code = (JValue)answer["body"]["code"];
+					answer["status"] = code is null ? (int)response.StatusCode : (int)code;
+					if (!(code is null) && (int)code == 502)
 						answer["status"] = 200;
 				}
-				temp3 = (int)answer["status"];
-				temp3 = 100 < temp3 && temp3 < 600 ? temp3 : 400;
-				answer["status"] = temp3;
-				return (temp3 == 200, answer);
+				int status = (int)answer["status"];
+				status = 100 < status && status < 600 ? status : 400;
+				answer["status"] = status;
+				return (status == 200, answer);
 			}
 			catch (Exception ex) {
-				answer["status"] = 502;
-				answer["body"] = new JObject {
-					{ "code", 502 },
-					{ "msg", ex.ToFullString() }
-				};
-				return (false, answer);
-			}
-			finally {
-				response?.Dispose();
-			}
-
-			ulong GetCurrentTotalSeconds() {
-				TimeSpan _timeSpan;
-
-				_timeSpan = DateTime.UtcNow - new DateTime(1970, 1, 1);
-				return (ulong)_timeSpan.TotalSeconds;
+				return (false, new JObject {
+					["status"] = 502,
+					["body"] = new JObject {
+						["code"] = 502,
+						["msg"] = ex.ToFullString()
+					},
+					["cookie"] = null
+				});
 			}
 
-			ulong GetCurrentTotalMilliseconds() {
-				TimeSpan _timeSpan;
-
-				_timeSpan = DateTime.UtcNow - new DateTime(1970, 1, 1);
-				return (ulong)_timeSpan.TotalMilliseconds;
+			static ulong GetCurrentTotalSeconds() {
+				var timeSpan = DateTime.UtcNow - new DateTime(1970, 1, 1);
+				return (ulong)timeSpan.TotalSeconds;
 			}
 
-			byte[] ReadStream(Stream _stream) {
-				byte[] _buffer;
-				List<byte> _byteList;
-
-				_buffer = new byte[0x1000];
-				_byteList = new List<byte>();
-				for (int i = 0; i < int.MaxValue; i++) {
-					int count;
-
-					count = _stream.Read(_buffer, 0, _buffer.Length);
-					if (count == 0x1000)
-						_byteList.AddRange(_buffer);
-					else if (count == 0)
-						return _byteList.ToArray();
-					else
-						for (int j = 0; j < count; j++)
-							_byteList.Add(_buffer[j]);
-				}
-				throw new OutOfMemoryException();
+			static ulong GetCurrentTotalMilliseconds() {
+				var timeSpan = DateTime.UtcNow - new DateTime(1970, 1, 1);
+				return (ulong)timeSpan.TotalMilliseconds;
 			}
 		}
 	}

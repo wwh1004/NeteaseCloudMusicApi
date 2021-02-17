@@ -65,12 +65,10 @@ namespace NeteaseCloudMusicApi {
 		}
 
 		private IEnumerable<KeyValuePair<string, string>> GetData(Dictionary<string, string> queries) {
-			QueryCollection data;
-
 			if (_parameterInfos.Length == 0)
 				return _emptyData;
-			data = new QueryCollection();
-			foreach (ParameterInfo parameterInfo in _parameterInfos)
+			var data = new QueryCollection();
+			foreach (var parameterInfo in _parameterInfos) {
 				switch (parameterInfo.Type) {
 				case ParameterType.Required:
 					data.Add(parameterInfo.Key, parameterInfo.GetRealValue(queries[parameterInfo.GetForwardedKey()]));
@@ -87,6 +85,7 @@ namespace NeteaseCloudMusicApi {
 				default:
 					throw new ArgumentOutOfRangeException(nameof(parameterInfo));
 				}
+			}
 			return data;
 		}
 
@@ -256,7 +255,7 @@ namespace NeteaseCloudMusicApi {
 				data = new QueryCollection {
 					{ "e_r", "true" }
 				};
-				foreach (KeyValuePair<string, string> query in queries)
+				foreach (var query in queries)
 					if (query.Key.StartsWith("/api/", StringComparison.Ordinal))
 						data.Add(query);
 				return data;
@@ -1395,14 +1394,11 @@ namespace NeteaseCloudMusicApi {
 		}
 
 		private static options BuildOptions(string crypto, IEnumerable<Cookie> cookies, string ua, string url) {
-			CookieCollection cookieCollection;
-			options options;
-
-			cookieCollection = new CookieCollection();
+			var cookieCollection = new CookieCollection();
 			if (!(cookies is null))
-				foreach (Cookie cookie in cookies)
+				foreach (var cookie in cookies)
 					cookieCollection.Add(cookie);
-			options = new options {
+			var options = new options {
 				crypto = crypto,
 				cookie = cookieCollection,
 				ua = ua,
