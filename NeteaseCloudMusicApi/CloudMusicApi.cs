@@ -17,40 +17,28 @@ namespace NeteaseCloudMusicApi {
 	/// 网易云音乐API
 	/// </summary>
 	public sealed partial class CloudMusicApi : IDisposable {
-		private readonly HttpClient _client;
-		private readonly HttpClientHandler _clientHandler;
 		private bool _isDisposed;
 
-		private static readonly Dictionary<string, string> _emptyQueries = new Dictionary<string, string>();
+		/// <summary />
+		public HttpClient Client { get; }
 
 		/// <summary />
-		public HttpClient Client => _client;
-
-		/// <summary />
-		public HttpClientHandler ClientHandler => _clientHandler;
-
-		/// <summary>
-		/// 代理服务器
-		/// </summary>
-		public IWebProxy Proxy {
-			get => _clientHandler.Proxy;
-			set => _clientHandler.Proxy = value;
-		}
+		public HttpClientHandler ClientHandler { get; }
 
 		/// <summary>
 		/// 空请求参数，用于填充 queries 参数
 		/// </summary>
-		public static Dictionary<string, string> EmptyQueries => _emptyQueries;
+		public static Dictionary<string, string> EmptyQueries { get; } = new Dictionary<string, string>();
 
 		/// <summary>
 		/// 构造器
 		/// </summary>
 		public CloudMusicApi() {
-			_clientHandler = new HttpClientHandler {
+			ClientHandler = new HttpClientHandler {
 				AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
 				UseCookies = true
 			};
-			_client = new HttpClient(_clientHandler);
+			Client = new HttpClient(ClientHandler);
 		}
 
 		/// <summary>
@@ -62,7 +50,6 @@ namespace NeteaseCloudMusicApi {
 		/// <returns></returns>
 		public bool Request(CloudMusicApiProvider provider, Dictionary<string, string> queries, out JObject result) {
 			bool isOk;
-
 			(isOk, result) = RequestAsync(provider, queries).Result;
 			return isOk;
 		}
@@ -103,7 +90,7 @@ namespace NeteaseCloudMusicApi {
 			var data2 = new Dictionary<string, string>();
 			foreach (var item in data)
 				data2.Add(item.Key, item.Value);
-			var (isOk, json) = await Utils.Request.CreateRequest(_client, method.Method, url, data2, options);
+			var (isOk, json) = await Utils.Request.CreateRequest(Client, method.Method, url, data2, options);
 			json = (JObject)json["body"];
 			if (!isOk && (int?)json["code"] == 301)
 				json["msg"] = "需要登录";
@@ -143,14 +130,12 @@ namespace NeteaseCloudMusicApi {
 				const string GUSER = "GUser=";
 				const string GBINDS = "GBinds=";
 
-				using var response = await _client.GetAsync("https://music.163.com");
+				using var response = await Client.GetAsync("https://music.163.com");
 				string s = Encoding.UTF8.GetString(await response.Content.ReadAsByteArrayAsync());
 				int index = s.IndexOf(GUSER, StringComparison.Ordinal);
 				if (index == -1)
 					return (false, new JObject { ["code"] = 301 });
-				var json = new JObject {
-					["code"] = 200
-				};
+				var json = new JObject { ["code"] = 200 };
 				using (var reader = new StringReader(s.Substring(index + GUSER.Length)))
 				using (var jsonReader = new JsonTextReader(reader))
 					json.Add("profile", JObject.Load(jsonReader));
@@ -169,7 +154,7 @@ namespace NeteaseCloudMusicApi {
 
 		private async Task<(bool, JObject)> HandleRelatedPlaylistAsync(Dictionary<string, string> queries) {
 			try {
-				using var response = await _client.SendAsync("https://music.163.com/playlist", HttpMethod.Get, new QueryCollection { { "id", queries["id"] } }, new QueryCollection { { "User-Agent", Utils.Request.ChooseUserAgent("pc") } });
+				using var response = await Client.SendAsync("https://music.163.com/playlist", HttpMethod.Get, new Dictionary<string, string> { ["id"] = queries["id"] }, new Dictionary<string, string> { ["User-Agent"] = Utils.Request.ChooseUserAgent("pc") });
 				string s = Encoding.UTF8.GetString(await response.Content.ReadAsByteArrayAsync());
 				var matchs = Regex.Matches(s, @"<div class=""cver u-cover u-cover-3"">[\s\S]*?<img src=""([^""]+)"">[\s\S]*?<a class=""sname f-fs1 s-fc0"" href=""([^""]+)""[^>]*>([^<]+?)<\/a>[\s\S]*?<a class=""nm nm f-thide s-fc3"" href=""([^""]+)""[^>]*>([^<]+?)<\/a>");
 				var playlists = new JArray(matchs.Cast<Match>().Select(match => new JObject {
@@ -197,7 +182,7 @@ namespace NeteaseCloudMusicApi {
 		/// <summary />
 		public void Dispose() {
 			if (!_isDisposed) {
-				_client.Dispose();
+				Client.Dispose();
 				_isDisposed = true;
 			}
 		}
