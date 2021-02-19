@@ -6,5 +6,8 @@ namespace NeteaseCloudMusicApi.Utils {
 		public CookieCollection Cookie;
 		public string UA;
 		public string Url;
+		public string RealIP;
+		public bool UseProxy;
+		public IWebProxy Proxy;
 	}
 }

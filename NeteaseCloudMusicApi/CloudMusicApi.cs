@@ -23,10 +23,50 @@ namespace NeteaseCloudMusicApi {
 		public CookieCollection Cookies { get; }
 
 		/// <summary>
+		/// 请求头中的 X-Real-IP，如果为 <see langword="null"/> 则不设置
+		/// </summary>
+		public string RealIP { get; set; }
+
+		/// <summary>
+		/// 是否使用代理
+		/// </summary>
+		public bool UseProxy { get; set; }
+
+		/// <summary>
+		/// 代理
+		/// </summary>
+		public IWebProxy Proxy { get; set; }
+
+		/// <summary>
 		/// 构造器
 		/// </summary>
 		public CloudMusicApi() {
 			Cookies = new CookieCollection();
+			UseProxy = true;
+		}
+
+		/// <summary>
+		/// 构造器
+		/// </summary>
+		/// <param name="cookies"></param>
+		public CloudMusicApi(CookieCollection cookies) {
+			if (cookies is null)
+				throw new ArgumentNullException(nameof(cookies));
+
+			Cookies = new CookieCollection { cookies };
+		}
+
+		/// <summary>
+		/// 构造器
+		/// </summary>
+		/// <param name="cookies"></param>
+		public CloudMusicApi(IEnumerable<Cookie> cookies) {
+			if (cookies is null)
+				throw new ArgumentNullException(nameof(cookies));
+
+			Cookies = new CookieCollection();
+			foreach (var cookie in cookies)
+				Cookies.Add(cookie);
 		}
 
 		/// <summary>
@@ -62,23 +102,25 @@ namespace NeteaseCloudMusicApi {
 			if (options is null)
 				throw new ArgumentNullException(nameof(options));
 
-			options = MergeOptions(options, Cookies);
-			var (isOk, json) = await Request.CreateRequest(method.Method, url, data, options, Cookies);
+			var (isOk, json) = await Request.CreateRequest(method.Method, url, data, MergeOptions(options), Cookies);
 			json = (JObject)json["body"];
 			if (!isOk && (int?)json["code"] == 301)
 				json["msg"] = "需要登录";
 			return (isOk, json);
 		}
 
-		private static Options MergeOptions(Options options, CookieCollection cookies) {
+		private Options MergeOptions(Options options) {
 			var newOptions = new Options {
 				Crypto = options.Crypto,
 				Cookie = new CookieCollection(),
 				UA = options.UA,
-				Url = options.Url
+				Url = options.Url,
+				RealIP = RealIP,
+				UseProxy = UseProxy,
+				Proxy = Proxy
 			};
 			newOptions.Cookie.Add(options.Cookie);
-			newOptions.Cookie.Add(cookies);
+			newOptions.Cookie.Add(Cookies);
 			return newOptions;
 		}
 

@@ -60,12 +60,27 @@ namespace NeteaseCloudMusicApi.Utils {
 #endif
 		}
 
+		public static CookieCollection ParseCookies(IEnumerable<string> cookieHeaders) {
+			if (cookieHeaders is null)
+				return new CookieCollection();
+
+			var cookies = new CookieCollection();
+			foreach (string cookieHeader in cookieHeaders)
+				ParseCookies(cookies, cookieHeader);
+			return cookies;
+		}
+
 		public static CookieCollection ParseCookies(string cookieHeader) {
 			if (string.IsNullOrEmpty(cookieHeader))
 				return new CookieCollection();
 
-			object parser = CookieParser_ConstructorInfo.Invoke(new object[] { cookieHeader });
 			var cookies = new CookieCollection();
+			ParseCookies(cookies, cookieHeader);
+			return cookies;
+		}
+
+		private static void ParseCookies(CookieCollection cookies, string cookieHeader) {
+			object parser = CookieParser_ConstructorInfo.Invoke(new object[] { cookieHeader });
 			while (true) {
 				var cookie = (Cookie)CookieParser_Get_MethodInfo.Invoke(parser, null);
 				if (cookie is null && (bool)CookieParser_EndofHeader_MethodInfo.Invoke(parser, null))
@@ -73,12 +88,11 @@ namespace NeteaseCloudMusicApi.Utils {
 
 				cookies.Add(cookie);
 			}
-			return cookies;
 		}
 
 		public static string ToCookieHeader(CookieCollection cookies) {
-			if (cookies is null)
-				throw new ArgumentNullException(nameof(cookies));
+			if (cookies is null || cookies.Count == 0)
+				return string.Empty;
 
 #if DotNetCore30Plus
 			return string.Join("; ", cookies.Select(t => t.Name + "=" + t.Value));
@@ -218,15 +232,15 @@ namespace NeteaseCloudMusicApi.Utils {
 						content.Headers.Remove("Content-Type");
 					// When we create a HttpContent, it will automatically set a Content-Type. We should remove it first otherwise header parser will throw an exception.
 					if (value is string s)
-						content.Headers.Add(name, s);
+						content.Headers.TryAddWithoutValidation(name, s);
 					else
-						content.Headers.Add(name, (IEnumerable<string>)value);
+						content.Headers.TryAddWithoutValidation(name, (IEnumerable<string>)value);
 				}
 				else {
 					if (value is string s)
-						request.Headers.Add(name, s);
+						request.Headers.TryAddWithoutValidation(name, s);
 					else
-						request.Headers.Add(name, (IEnumerable<string>)value);
+						request.Headers.TryAddWithoutValidation(name, (IEnumerable<string>)value);
 				}
 			}
 		}
