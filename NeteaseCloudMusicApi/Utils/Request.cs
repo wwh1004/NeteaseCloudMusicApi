@@ -18,7 +18,7 @@ namespace NeteaseCloudMusicApi.Utils {
 			"Mozilla/5.0 (Linux; Android 5.0; SM-G900P Build/LRX21T) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Mobile Safari/537.36",
 			"Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Mobile Safari/537.36",
 			"Mozilla/5.0 (Linux; Android 5.1.1; Nexus 6 Build/LYZ28E) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Mobile Safari/537.36",
-			"Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_2 like Mac OS X) AppleWebKit/603.2.4 (KHTML, like Gecko) Mobile/14F89;GameHelper",
+			"Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_2 like Mac OS X) AppleWebKit/603.2.4 (KHTML, like Gecko) Mobile/14F89",
 			"Mozilla/5.0 (iPhone; CPU iPhone OS 10_0 like Mac OS X) AppleWebKit/602.1.38 (KHTML, like Gecko) Version/10.0 Mobile/14A300 Safari/602.1",
 			"Mozilla/5.0 (iPad; CPU OS 10_0 like Mac OS X) AppleWebKit/602.1.38 (KHTML, like Gecko) Version/10.0 Mobile/14A300 Safari/602.1",
 			"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.12; rv:46.0) Gecko/20100101 Firefox/46.0",
@@ -40,9 +40,7 @@ namespace NeteaseCloudMusicApi.Utils {
 			}
 		}
 
-		public static async Task<(bool, JObject)> CreateRequest(HttpClient client, string method, string url, Dictionary<string, string> data, Options options) {
-			if (client is null)
-				throw new ArgumentNullException(nameof(client));
+		public static async Task<(bool, JObject)> CreateRequest(string method, string url, Dictionary<string, object> data, Options options, CookieCollection setCookie) {
 			if (method is null)
 				throw new ArgumentNullException(nameof(method));
 			if (url is null)
@@ -54,21 +52,22 @@ namespace NeteaseCloudMusicApi.Utils {
 
 			var headers = new Dictionary<string, string> {
 				["User-Agent"] = ChooseUserAgent(options.UA),
-				["Cookie"] = string.Join("; ", options.Cookie.Cast<Cookie>().Select(t => Uri.EscapeDataString(t.Name) + "=" + Uri.EscapeDataString(t.Value)))
+				["Cookie"] = string.Join("; ", options.Cookie.Cast<Cookie>().Select(t => t.Name + "=" + t.Value))
 			};
 			if (method.ToUpperInvariant() == "POST")
 				headers["Content-Type"] = "application/x-www-form-urlencoded";
 			if (url.Contains("music.163.com"))
 				headers["Referer"] = "https://music.163.com";
+			var data2 = default(Dictionary<string, string>);
 			switch (options.Crypto) {
 			case "weapi": {
 				data["csrf_token"] = options.Cookie.Get("__csrf", string.Empty);
-				data = Crypto.WEApi(data);
+				data2 = Crypto.WEApi(data);
 				url = Regex.Replace(url, @"\w*api", "weapi");
 				break;
 			}
 			case "linuxapi": {
-				data = Crypto.LinuxApi(new Dictionary<string, object> {
+				data2 = Crypto.LinuxApi(new Dictionary<string, object> {
 					["method"] = method,
 					["url"] = Regex.Replace(url, @"\w*api", "api"),
 					["params"] = data
@@ -78,9 +77,7 @@ namespace NeteaseCloudMusicApi.Utils {
 				break;
 			}
 			case "eapi": {
-				var cookie = new CookieCollection();
-				foreach (Cookie item in options.Cookie)
-					cookie.Add(new Cookie(item.Name, item.Value));
+				var cookie = options.Cookie;
 				string csrfToken = cookie.Get("__csrf", string.Empty);
 				var header = new Dictionary<string, string>() {
 					["osver"] = cookie.Get("osver", string.Empty), // 系统版本
@@ -99,30 +96,40 @@ namespace NeteaseCloudMusicApi.Utils {
 					header["MUSIC_U"] = cookie["MUSIC_U"].Value;
 				if (!(cookie["MUSIC_A"] is null))
 					header["MUSIC_A"] = cookie["MUSIC_A"].Value;
-				headers["Cookie"] = string.Join("; ", header.Select(t => Uri.EscapeDataString(t.Key) + "=" + Uri.EscapeDataString(t.Value)));
+				headers["Cookie"] = string.Join("; ", header.Select(t => t.Key + "=" + t.Value));
 				data["header"] = JsonConvert.SerializeObject(header);
-				data = Crypto.EApi(options.Url, data);
+				data2 = Crypto.EApi(options.Url, data);
 				url = Regex.Replace(url, @"\w*api", "eapi");
 				break;
 			}
 			}
 			try {
-				using var response = await client.SendAsync(url, method, headers, data);
+				using var handler = new HttpClientHandler {
+					AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+					UseCookies = false
+				};
+				using var client = new HttpClient(handler);
+				using var response = await client.SendAsync(url, method, headers, data2);
 				response.EnsureSuccessStatusCode();
-				if (!response.Headers.TryGetValues("Set-Cookie", out var setCookie))
-					setCookie = Array.Empty<string>();
+				if (response.Headers.TryGetValues("Set-Cookie", out var rawSetCookie)) {
+					foreach (string cookie in rawSetCookie)
+						setCookie.Add(QuickHttp.ParseCookies(cookie));
+				}
+				else {
+					rawSetCookie = Array.Empty<string>();
+				}
 				var answer = new JObject {
 					["status"] = 500,
 					["body"] = null,
 					["cookie"] = null
 				};
-				answer["cookie"] = new JArray(setCookie.Select(x => Regex.Replace(x, @"\s*Domain=[^(;|$)]+;*", string.Empty)).Where(x => !string.IsNullOrEmpty(x)).ToList());
+				answer["cookie"] = new JArray(rawSetCookie.Select(x => Regex.Replace(x, @"\s*Domain=[^(;|$)]+;*", string.Empty)).ToList());
 				if (options.Crypto == "eapi") {
 					byte[] buffer = await response.Content.ReadAsByteArrayAsync();
 					try {
 						answer["body"] = JObject.Parse(Encoding.UTF8.GetString(Crypto.Decrypt(buffer)));
-						var temp2 = (JValue)answer["body"]["code"];
-						answer["status"] = temp2 is null ? (int)response.StatusCode : (int)temp2;
+						var code = (JValue)answer["body"]["code"];
+						answer["status"] = code is null ? (int)response.StatusCode : (int)code;
 					}
 					catch {
 						answer["body"] = JObject.Parse(Encoding.UTF8.GetString(buffer));

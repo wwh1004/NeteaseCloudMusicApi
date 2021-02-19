@@ -4,27 +4,87 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace NeteaseCloudMusicApi {
+namespace NeteaseCloudMusicApi.Utils {
+	/// <summary>
+	/// a VERY VERY EASY http request helper
+	/// </summary>
+	/// <remarks>
+	/// SOMETHING IMPORTANT:
+	/// 
+	/// 1.
+	/// Default value of <see cref="HttpClientHandler.UseCookies"/> is true. Set <see cref="HttpClientHandler.UseCookies"/> to false so that <see cref="HttpClient"/> will use cookies in headers not in <see cref="HttpClientHandler"/>.
+	/// In .NET Framework, when <see cref="HttpClientHandler.UseCookies"/> is true, <see cref="HttpClient"/> won't use cookies in <see cref="HttpClient"/>.
+	/// In .NET Core, when <see cref="HttpClientHandler.UseCookies"/> is true, cookies in headers will be merged into final request not be replaced by cookies in <see cref="HttpClientHandler"/>.
+	///
+	/// 2.
+	/// If HttpClientHandler can't automatically parse Set-Cookie correctly in .NET 5.0 and later versions, please try enabling 'System.Globalization.UseNls' switch.
+	/// By default 'System.Globalization.UseNls' switch is false in .NET 5.0 and later versions and <see cref="System.Globalization.GregorianCalendar.TwoDigitYearMax"/> is 2029. It will cause a few cookies like 'Thu, 31-Dec-37 23:55:55 GMT' be regard as expired.
+	/// How to enable NLS: https://docs.microsoft.com/en-us/dotnet/core/run-time-config/globalization#nls
+	///
+	/// 3.
+	/// <see cref="HttpClient"/> is fully rewrited in .NET Core, so many behaviors are different with <see cref="HttpClient"/> in .NET Framework.
+	/// </remarks>
 	internal static class QuickHttp {
+		private static readonly Type CookieParser_Type = typeof(Cookie).Module.GetType("System.Net.CookieParser");
+		private static readonly ConstructorInfo CookieParser_ConstructorInfo = CookieParser_Type.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).First(t => t.GetParameters().SingleOrDefault()?.ParameterType == typeof(string));
+		private static readonly MethodInfo CookieParser_Get_MethodInfo = CookieParser_Type.GetMethod("Get", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, Type.EmptyTypes, null);
+		private static readonly MethodInfo CookieParser_EndofHeader_MethodInfo = CookieParser_Type.GetMethod("EndofHeader", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, Type.EmptyTypes, null);
 #if DEBUG
-		private static readonly System.Reflection.FieldInfo Handler_FieldInfo = typeof(HttpMessageInvoker).GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).First(t => t.FieldType == typeof(HttpMessageHandler));
+		private static readonly FieldInfo HttpMessageInvoker_Handler_FieldInfo = typeof(HttpMessageInvoker).GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).First(t => t.FieldType == typeof(HttpMessageHandler));
 #endif
 
-		public static async Task<byte[]> SendAsync(object url, object method, object headers = null, object content = null, CancellationToken cancellationToken = default) {
+		public static async Task<byte[]> SendAsync(object url, object method, object headers = null, object content = null, bool ensureSuccessStatusCode = true, Out<HttpStatusCode> statusCode = null, Out<CookieCollection> setCookie = null, CancellationToken cancellationToken = default) {
 			using var handler = new HttpClientHandler {
 				AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
 				UseCookies = false
 			};
-			// Default value of UseCookies is true. Set UseCookies to false so that HttpClient will use cookies in headers not in HttpClientHandler.
-			// In .NET Framework, when UseCookies is true, HttpClient won't use cookies in HttpClient.
-			// In .NET Core, when UseCookies is true, cookies in headers will be merged into final request not be replaced by cookies in HttpClientHandler.
 			using var client = new HttpClient(handler);
 			using var response = await client.SendAsync(url, method, headers, content, cancellationToken);
-			response.EnsureSuccessStatusCode();
-			return await response.Content?.ReadAsByteArrayAsync();
+			if (ensureSuccessStatusCode)
+				response.EnsureSuccessStatusCode();
+			if (!(statusCode is null))
+				statusCode.Value = response.StatusCode;
+			if (!(setCookie is null) && response.Headers.TryGetValues("Set-Cookie", out var cookies)) {
+				var cookieCollection = setCookie.Value = new CookieCollection();
+				foreach (string cookie in cookies)
+					cookieCollection.Add(ParseCookies(cookie));
+			}
+#if DotNet50Plus
+			return response.IsSuccessStatusCode ? await response.Content?.ReadAsByteArrayAsync(cancellationToken) : null;
+#else
+			return response.IsSuccessStatusCode ? await response.Content?.ReadAsByteArrayAsync() : null;
+#endif
+		}
+
+		public static CookieCollection ParseCookies(string cookieHeader) {
+			if (string.IsNullOrEmpty(cookieHeader))
+				return new CookieCollection();
+
+			object parser = CookieParser_ConstructorInfo.Invoke(new object[] { cookieHeader });
+			var cookies = new CookieCollection();
+			while (true) {
+				var cookie = (Cookie)CookieParser_Get_MethodInfo.Invoke(parser, null);
+				if (cookie is null && (bool)CookieParser_EndofHeader_MethodInfo.Invoke(parser, null))
+					break;
+
+				cookies.Add(cookie);
+			}
+			return cookies;
+		}
+
+		public static string ToCookieHeader(CookieCollection cookies) {
+			if (cookies is null)
+				throw new ArgumentNullException(nameof(cookies));
+
+#if DotNetCore30Plus
+			return string.Join("; ", cookies.Select(t => t.Name + "=" + t.Value));
+#else
+			return string.Join("; ", cookies.Cast<Cookie>().Select(t => t.Name + "=" + t.Value));
+#endif
 		}
 
 		public static async Task<HttpResponseMessage> SendAsync(this HttpClient client, object url, object method, object headers = null, object content = null, CancellationToken cancellationToken = default) {
@@ -45,7 +105,7 @@ namespace NeteaseCloudMusicApi {
 			if (!(headers is null) && !HeaderConverters.TryConvert(request, headers))
 				throw new ArgumentOutOfRangeException(nameof(headers), $"For '{headers}', only the following types are supported: {HeaderConverters.SupportedTypesString}");
 #if DEBUG
-			if (!(headers is null) && Handler_FieldInfo.GetValue(client) is HttpClientHandler handler && handler.UseCookies) {
+			if (!(headers is null) && HttpMessageInvoker_Handler_FieldInfo.GetValue(client) is HttpClientHandler handler && handler.UseCookies) {
 				using var r = new HttpRequestMessage { Content = new StringContent(string.Empty) };
 				HeaderConverters.TryConvert(r, headers);
 				if (r.Headers.Contains("Cookie"))
@@ -53,6 +113,18 @@ namespace NeteaseCloudMusicApi {
 			}
 #endif
 			return await client.SendAsync(request, cancellationToken);
+		}
+
+		/// <summary>
+		/// Used for out parameter in async method
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		public sealed class Out<T> {
+			public T Value;
+
+			public static implicit operator T(Out<T> o) {
+				return o.Value;
+			}
 		}
 
 		// see https://github.com/dotnet/runtime/blob/master/src/libraries/System.Net.Http/src/System/Net/Http/Headers/KnownHeaders.cs

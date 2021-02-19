@@ -9,14 +9,14 @@ namespace NeteaseCloudMusicApi.Demo {
 	internal static class Program {
 		private static async Task Main() {
 			try {
-				using var api = new CloudMusicApi();
+				var api = new CloudMusicApi();
 
 				/******************** 登录 ********************/
 
 				bool isOk;
 				JObject json;
 				do {
-					var queries = new Dictionary<string, string>();
+					var queries = new Dictionary<string, object>();
 					Console.WriteLine("请输入账号（邮箱或手机）");
 					string account = Console.ReadLine();
 					bool isPhone = Regex.Match(account, "^[0-9]+$").Success;
@@ -34,7 +34,7 @@ namespace NeteaseCloudMusicApi.Demo {
 
 				/******************** 获取账号信息 ********************/
 
-				(isOk, json) = await api.RequestAsync(CloudMusicApiProviders.LoginStatus, CloudMusicApi.EmptyQueries);
+				(isOk, json) = await api.RequestAsync(CloudMusicApiProviders.LoginStatus);
 				if (!isOk)
 					throw new ApplicationException($"获取账号信息失败： {json}");
 				int uid = (int)json["profile"]["userId"];
@@ -46,14 +46,14 @@ namespace NeteaseCloudMusicApi.Demo {
 
 				/******************** 获取我喜欢的音乐 ********************/
 
-				(isOk, json) = await api.RequestAsync(CloudMusicApiProviders.UserPlaylist, new Dictionary<string, string> { ["uid"] = uid.ToString() });
+				(isOk, json) = await api.RequestAsync(CloudMusicApiProviders.UserPlaylist, new Dictionary<string, object> { ["uid"] = uid });
 				if (!isOk)
 					throw new ApplicationException($"获取用户歌单失败： {json}");
-				(isOk, json) = await api.RequestAsync(CloudMusicApiProviders.PlaylistDetail, new Dictionary<string, string> { ["id"] = json["playlist"][0]["id"].ToString() });
+				(isOk, json) = await api.RequestAsync(CloudMusicApiProviders.PlaylistDetail, new Dictionary<string, object> { ["id"] = json["playlist"][0]["id"] });
 				if (!isOk)
 					throw new ApplicationException($"获取歌单详情失败： {json}");
 				int[] trackIds = json["playlist"]["trackIds"].Select(t => (int)t["id"]).ToArray();
-				(isOk, json) = await api.RequestAsync(CloudMusicApiProviders.SongDetail, new Dictionary<string, string> { ["ids"] = string.Join(",", trackIds) });
+				(isOk, json) = await api.RequestAsync(CloudMusicApiProviders.SongDetail, new Dictionary<string, object> { ["ids"] = string.Join(",", trackIds) });
 				if (!isOk)
 					throw new ApplicationException($"获取歌曲详情失败： {json}");
 				Console.WriteLine($"我喜欢的音乐 （{trackIds.Length} 首）：");
@@ -65,7 +65,7 @@ namespace NeteaseCloudMusicApi.Demo {
 
 				/******************** 退出登录 ********************/
 
-				(isOk, json) = await api.RequestAsync(CloudMusicApiProviders.Logout, CloudMusicApi.EmptyQueries);
+				(isOk, json) = await api.RequestAsync(CloudMusicApiProviders.Logout);
 				if (!isOk)
 					throw new ApplicationException($"退出登录失败： {json}");
 				Console.WriteLine("退出登录成功");

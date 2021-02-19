@@ -13,7 +13,7 @@ namespace NeteaseCloudMusicApi.Utils {
 		private static readonly byte[] presetKey = Encoding.ASCII.GetBytes("0CoJUm6Qyw8W8jud");
 		private static readonly byte[] linuxapiKey = Encoding.ASCII.GetBytes("rFgB&h#%2?^eDg:Q");
 		private const string base62 = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-		private const string publicKey = "-----BEGIN PUBLIC KEY-----\nMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDgtQn2JZ34ZC28NWYpAUd98iZ37BUrX/aKzmFbt7clFSs6sXqHauqKWqdtLkF2KexO40H1YTX8z2lSgBBOAxLsvaklV8k4cBFK9snQXE9/DDaFt6Rr7iVZMldczhC0JNgTz+SHXT6CBHuX3e9SdB1Ua44oncaTWz7OBGLbCiK45wIDAQAB\n-----END PUBLIC KEY-----";
+		private static readonly RSAParameters publicKey = ParsePublicKey("-----BEGIN PUBLIC KEY-----\nMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDgtQn2JZ34ZC28NWYpAUd98iZ37BUrX/aKzmFbt7clFSs6sXqHauqKWqdtLkF2KexO40H1YTX8z2lSgBBOAxLsvaklV8k4cBFK9snQXE9/DDaFt6Rr7iVZMldczhC0JNgTz+SHXT6CBHuX3e9SdB1Ua44oncaTWz7OBGLbCiK45wIDAQAB\n-----END PUBLIC KEY-----");
 		private static readonly byte[] eapiKey = Encoding.ASCII.GetBytes("e82ckenh8dichen8");
 
 		public static Dictionary<string, string> WEApi(object @object) {
@@ -69,83 +69,82 @@ namespace NeteaseCloudMusicApi.Utils {
 			return cryptoTransform.TransformFinalBlock(buffer, 0, buffer.Length);
 		}
 
-		private static byte[] RsaEncrypt(byte[] buffer, string key) {
-			var rsaKey = ParsePublicKey(key);
-			return BigInteger.ModPow(GetBigIntegerBigEndian(buffer), GetBigIntegerBigEndian(rsaKey.Exponent), GetBigIntegerBigEndian(rsaKey.Modulus)).ToByteArray(true, true);
-
-			static RSAParameters ParsePublicKey(string publicKey) {
-				publicKey = publicKey.Replace("\n", string.Empty);
-				publicKey = publicKey.Substring(26, publicKey.Length - 50);
-				using var stream = new MemoryStream(Convert.FromBase64String(publicKey));
-				using var reader = new BinaryReader(stream);
-
-				ushort i16 = reader.ReadUInt16();
-				if (i16 == 0x8130)
-					reader.ReadByte();
-				else if (i16 == 0x8230)
-					reader.ReadInt16();
-				else
-					throw new ArgumentException(nameof(publicKey));
-
-				byte[] oid = reader.ReadBytes(15);
-				if (!oid.SequenceEqual(new byte[] { 0x30, 0x0D, 0x06, 0x09, 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x01, 0x01, 0x05, 0x00 }))
-					throw new ArgumentException(nameof(publicKey));
-
-				i16 = reader.ReadUInt16();
-				if (i16 == 0x8103)
-					reader.ReadByte();
-				else if (i16 == 0x8203)
-					reader.ReadInt16();
-				else
-					throw new ArgumentException(nameof(publicKey));
-
-				byte i8 = reader.ReadByte();
-				if (i8 != 0x00)
-					throw new ArgumentException(nameof(publicKey));
-				i16 = reader.ReadUInt16();
-				if (i16 == 0x8130)
-					reader.ReadByte();
-				else if (i16 == 0x8230)
-					reader.ReadInt16();
-				else
-					throw new ArgumentException(nameof(publicKey));
-
-				i16 = reader.ReadUInt16();
-				byte high;
-				byte low;
-				if (i16 == 0x8102) {
-					high = 0;
-					low = reader.ReadByte();
-				}
-				else if (i16 == 0x8202) {
-					high = reader.ReadByte();
-					low = reader.ReadByte();
-				}
-				else
-					throw new ArgumentException(nameof(publicKey));
-
-				int modulusLength = BitConverter.ToInt32(new byte[] { low, high, 0x00, 0x00 }, 0);
-				if (reader.PeekChar() == 0x00) {
-					reader.ReadByte();
-					modulusLength -= 1;
-				}
-
-				byte[] modulus = reader.ReadBytes(modulusLength);
-				if (reader.ReadByte() != 0x02)
-					throw new ArgumentException(nameof(publicKey));
-
-				int exponentLength = reader.ReadByte();
-				byte[] exponent = reader.ReadBytes(exponentLength);
-
-				return new RSAParameters {
-					Modulus = modulus,
-					Exponent = exponent
-				};
-			}
+		private static byte[] RsaEncrypt(byte[] buffer, RSAParameters key) {
+			return BigInteger.ModPow(GetBigIntegerBigEndian(buffer), GetBigIntegerBigEndian(key.Exponent), GetBigIntegerBigEndian(key.Modulus)).ToByteArray(true, true);
 
 			static BigInteger GetBigIntegerBigEndian(byte[] value) {
 				return new BigInteger(new ReadOnlySpan<byte>(value), true, true);
 			}
+		}
+
+		private static RSAParameters ParsePublicKey(string publicKey) {
+			publicKey = publicKey.Replace("\n", string.Empty);
+			publicKey = publicKey.Substring(26, publicKey.Length - 50);
+			using var stream = new MemoryStream(Convert.FromBase64String(publicKey));
+			using var reader = new BinaryReader(stream);
+
+			ushort i16 = reader.ReadUInt16();
+			if (i16 == 0x8130)
+				reader.ReadByte();
+			else if (i16 == 0x8230)
+				reader.ReadInt16();
+			else
+				throw new ArgumentException(nameof(publicKey));
+
+			byte[] oid = reader.ReadBytes(15);
+			if (!oid.SequenceEqual(new byte[] { 0x30, 0x0D, 0x06, 0x09, 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x01, 0x01, 0x05, 0x00 }))
+				throw new ArgumentException(nameof(publicKey));
+
+			i16 = reader.ReadUInt16();
+			if (i16 == 0x8103)
+				reader.ReadByte();
+			else if (i16 == 0x8203)
+				reader.ReadInt16();
+			else
+				throw new ArgumentException(nameof(publicKey));
+
+			byte i8 = reader.ReadByte();
+			if (i8 != 0x00)
+				throw new ArgumentException(nameof(publicKey));
+			i16 = reader.ReadUInt16();
+			if (i16 == 0x8130)
+				reader.ReadByte();
+			else if (i16 == 0x8230)
+				reader.ReadInt16();
+			else
+				throw new ArgumentException(nameof(publicKey));
+
+			i16 = reader.ReadUInt16();
+			byte high;
+			byte low;
+			if (i16 == 0x8102) {
+				high = 0;
+				low = reader.ReadByte();
+			}
+			else if (i16 == 0x8202) {
+				high = reader.ReadByte();
+				low = reader.ReadByte();
+			}
+			else
+				throw new ArgumentException(nameof(publicKey));
+
+			int modulusLength = BitConverter.ToInt32(new byte[] { low, high, 0x00, 0x00 }, 0);
+			if (reader.PeekChar() == 0x00) {
+				reader.ReadByte();
+				modulusLength -= 1;
+			}
+
+			byte[] modulus = reader.ReadBytes(modulusLength);
+			if (reader.ReadByte() != 0x02)
+				throw new ArgumentException(nameof(publicKey));
+
+			int exponentLength = reader.ReadByte();
+			byte[] exponent = reader.ReadBytes(exponentLength);
+
+			return new RSAParameters {
+				Modulus = modulus,
+				Exponent = exponent
+			};
 		}
 	}
 }
