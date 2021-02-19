@@ -5,8 +5,6 @@ using System.Text;
 
 namespace NeteaseCloudMusicApi.Utils {
 	internal static class Extensions {
-		private static readonly MD5 _md5 = MD5.Create();
-
 		public static byte[] ToByteArrayUtf8(this string value) {
 			return Encoding.UTF8.GetBytes(value);
 		}
@@ -30,7 +28,8 @@ namespace NeteaseCloudMusicApi.Utils {
 		}
 
 		public static byte[] ComputeMd5(this byte[] value) {
-			return _md5.ComputeHash(value);
+			using var md5 = MD5.Create();
+			return md5.ComputeHash(value);
 		}
 
 		public static byte[] RandomBytes(this Random random, int length) {

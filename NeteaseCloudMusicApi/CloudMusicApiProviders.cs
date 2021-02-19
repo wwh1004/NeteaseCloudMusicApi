@@ -1368,11 +1368,11 @@ namespace NeteaseCloudMusicApi {
 			case "20": return 112463;     // 台湾Hito排行榜
 			case "21": return 3812895;    // Beatport全球电子舞曲榜
 			case "22": return 71385702;   // 云音乐ACG音乐榜
-			case "23": return 991319590;  //云音乐说唱榜
-			case "24": return 71384707;   //云音乐古典音乐榜
-			case "25": return 1978921795; //云音乐电音榜
-			case "26": return 2250011882; //抖音排行榜
-			case "27": return 2617766278; //新声榜
+			case "23": return 991319590;  // 云音乐说唱榜
+			case "24": return 71384707;   // 云音乐古典音乐榜
+			case "25": return 1978921795; // 云音乐电音榜
+			case "26": return 2250011882; // 抖音排行榜
+			case "27": return 2617766278; // 新声榜
 			case "28": return 745956260;  // 云音乐韩语榜
 			case "29": return 2023401535; // 英国Q杂志中文版周榜
 			case "30": return 2006508653; // 电竞音乐榜
