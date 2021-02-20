@@ -4,6 +4,7 @@ using System.Extensions;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -121,10 +122,21 @@ namespace NeteaseCloudMusicApi.Utils {
                     handler.Proxy = options.Proxy;
                 using var client = new HttpClient(handler);
                 using var response = await client.SendAsync(url, method, headers, data2);
-                response.EnsureSuccessStatusCode();
+				response.EnsureSuccessStatusCode();
 				if (response.Headers.TryGetValues("Set-Cookie", out var rawSetCookie))
 					setCookie.Add(QuickHttp.ParseCookies(rawSetCookie));
-				string json = await response.Content.ReadAsStringAsync();
+				string json;
+				if (options.Crypto == "eapi") {
+					try {
+						json = Encoding.UTF8.GetString(Crypto.Decrypt(await response.Content.ReadAsByteArrayAsync()));
+					}
+					catch {
+						json = await response.Content.ReadAsStringAsync();
+					}
+				}
+				else {
+					json = await response.Content.ReadAsStringAsync();
+				}
 				var body = JObject.Parse(json);
 				int status = (int?)body["code"] ?? (int)response.StatusCode;
 				var answer = new JObject {
