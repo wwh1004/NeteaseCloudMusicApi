@@ -118,16 +118,15 @@ namespace NeteaseCloudMusicApi.Utils {
 					UseProxy = options.UseProxy
 				};
 				if (options.UseProxy)
-					handler.Proxy = options.Proxy;
-				using var client = new HttpClient(handler);
-				using var response = await client.SendAsync(url, method, headers, data2);
-				response.EnsureSuccessStatusCode();
+                    handler.Proxy = options.Proxy;
+                using var client = new HttpClient(handler);
+                using var response = await client.SendAsync(url, method, headers, data2);
+                response.EnsureSuccessStatusCode();
 				if (response.Headers.TryGetValues("Set-Cookie", out var rawSetCookie))
 					setCookie.Add(QuickHttp.ParseCookies(rawSetCookie));
-				var body = JObject.Parse(await response.Content.ReadAsStringAsync());
+				string json = await response.Content.ReadAsStringAsync();
+				var body = JObject.Parse(json);
 				int status = (int?)body["code"] ?? (int)response.StatusCode;
-				if (status == 201 || status == 302 || status == 400 || status == 502 || status == 800 || status == 801 || status == 802 || status == 803)
-					status = 200;
 				var answer = new JObject {
 					["status"] = status,
 					["body"] = body

@@ -9,7 +9,6 @@
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<AssemblyOriginatorKeyFile>../NeteaseCloudMusicApi.snk</AssemblyOriginatorKeyFile>
 		<SignAssembly>true</SignAssembly>
-		<NoWarn>IDE1006;CS0436;CS3021</NoWarn>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<OutputPath>..\bin\$(Configuration)</OutputPath>
 		<LangVersion>8.0</LangVersion>

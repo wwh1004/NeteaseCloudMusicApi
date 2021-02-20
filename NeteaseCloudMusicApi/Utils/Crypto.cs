@@ -70,10 +70,28 @@ namespace NeteaseCloudMusicApi.Utils {
 		}
 
 		private static byte[] RsaEncrypt(byte[] buffer, RSAParameters key) {
-			return BigInteger.ModPow(GetBigIntegerBigEndian(buffer), GetBigIntegerBigEndian(key.Exponent), GetBigIntegerBigEndian(key.Modulus)).ToByteArray(true, true);
+			return GetByteArrayBigEndian(BigInteger.ModPow(GetBigIntegerBigEndian(buffer), GetBigIntegerBigEndian(key.Exponent), GetBigIntegerBigEndian(key.Modulus)));
+
+			static byte[] GetByteArrayBigEndian(BigInteger value) {
+				byte[] array = value.ToByteArray();
+				if (array[array.Length - 1] == 0) {
+					byte[] array2 = new byte[array.Length - 1];
+					Buffer.BlockCopy(array, 0, array2, 0, array2.Length);
+					array = array2;
+				}
+				for (int i = 0; i < array.Length / 2; i++) {
+					byte t = array[i];
+					array[i] = array[array.Length - i - 1];
+					array[array.Length - i - 1] = t;
+				}
+				return array;
+			}
 
 			static BigInteger GetBigIntegerBigEndian(byte[] value) {
-				return new BigInteger(new ReadOnlySpan<byte>(value), true, true);
+				byte[] value2 = new byte[value.Length + 1];
+				for (int i = 0; i < value.Length; i++)
+					value2[value2.Length - i - 2] = value[i];
+				return new BigInteger(value2);
 			}
 		}
 
