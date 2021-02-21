@@ -37,7 +37,7 @@ namespace NeteaseCloudMusicApi.Demo {
 				(isOk, json) = await api.RequestAsync(CloudMusicApiProviders.LoginStatus);
 				if (!isOk)
 					throw new ApplicationException($"获取账号信息失败： {json}");
-				int uid = (int)json["profile"]["userId"];
+				long uid = (long)json["profile"]["userId"];
 				Console.WriteLine($"账号ID： {uid}");
 				Console.WriteLine($"账号昵称： {json["profile"]["nickname"]}");
 				Console.WriteLine();
@@ -53,7 +53,7 @@ namespace NeteaseCloudMusicApi.Demo {
 				if (!isOk)
 					throw new ApplicationException($"获取歌单详情失败： {json}");
 				int[] trackIds = json["playlist"]["trackIds"].Select(t => (int)t["id"]).ToArray();
-				(isOk, json) = await api.RequestAsync(CloudMusicApiProviders.SongDetail, new Dictionary<string, object> { ["ids"] = string.Join(",", trackIds) });
+				(isOk, json) = await api.RequestAsync(CloudMusicApiProviders.SongDetail, new Dictionary<string, object> { ["ids"] = trackIds });
 				if (!isOk)
 					throw new ApplicationException($"获取歌曲详情失败： {json}");
 				Console.WriteLine($"我喜欢的音乐 （{trackIds.Length} 首）：");

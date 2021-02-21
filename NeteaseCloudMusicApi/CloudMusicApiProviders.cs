@@ -40,7 +40,7 @@ namespace NeteaseCloudMusicApi {
 		/// <summary>
 		/// 收藏/取消收藏专辑
 		/// </summary>
-		public static readonly CloudMusicApiProvider AlbumSub = new CloudMusicApiProvider("/album/sub", HttpMethod.Post, q => $"https://music.163.com/api/album/{(q["t"].ToString() == "1" ? "sub" : "unsub")}", new ParameterInfo[] {
+		public static readonly CloudMusicApiProvider AlbumSub = new CloudMusicApiProvider("/album/sub", HttpMethod.Post, q => $"https://music.163.com/api/album/{SelectOperation(q["t"], "unsub", "sub")}", new ParameterInfo[] {
 			new ParameterInfo("id")
 		}, BuildOptions("weapi"));
 
@@ -98,7 +98,7 @@ namespace NeteaseCloudMusicApi {
 		/// <summary>
 		/// 收藏/取消收藏歌手
 		/// </summary>
-		public static readonly CloudMusicApiProvider ArtistSub = new CloudMusicApiProvider("/artist/sub", HttpMethod.Post, q => $"https://music.163.com/weapi/artist/{(q["t"].ToString() == "1" ? "sub" : "unsub")}", new ParameterInfo[] {
+		public static readonly CloudMusicApiProvider ArtistSub = new CloudMusicApiProvider("/artist/sub", HttpMethod.Post, q => $"https://music.163.com/weapi/artist/{SelectOperation(q["t"], "unsub", "sub")}", new ParameterInfo[] {
 			new ParameterInfo("artistId") { KeyForwarding = "id" },
 			new ParameterInfo("artistIds") { KeyForwarding = "id", Transformer = JsonArrayTransformer }
 		}, BuildOptions("weapi"));
@@ -176,10 +176,10 @@ namespace NeteaseCloudMusicApi {
 		/// <summary>
 		/// 发送/删除评论
 		/// </summary>
-		public static readonly CloudMusicApiProvider Comment = new CloudMusicApiProvider("/comment", HttpMethod.Post, q => $"https://music.163.com/weapi/resource/comments/{(q["t"].ToString() == "1" ? "add" : (q["t"].ToString() == "0" ? "delete" : "reply"))}", Array.Empty<ParameterInfo>(), BuildOptions("weapi", new Cookie[] { new Cookie("os", "pc") })) {
+		public static readonly CloudMusicApiProvider Comment = new CloudMusicApiProvider("/comment", HttpMethod.Post, q => $"https://music.163.com/weapi/resource/comments/{SelectOperation(q["t"], "delete", "add", "reply")}", Array.Empty<ParameterInfo>(), BuildOptions("weapi", new Cookie[] { new Cookie("os", "pc") })) {
 			DataProvider = queries => {
 				var data = new Dictionary<string, object> {
-					["threadId"] = CommentTypeTransformer(queries["type"]).ToString() + queries["id"]
+					["threadId"] = MangleResourceId(queries["type"], queries["id"])
 				};
 				switch (queries["t"].ToString()) {
 				case "0":
@@ -231,7 +231,7 @@ namespace NeteaseCloudMusicApi {
 		/// <summary>
 		/// 热门评论
 		/// </summary>
-		public static readonly CloudMusicApiProvider CommentHot = new CloudMusicApiProvider("/comment/hot", HttpMethod.Post, q => $"https://music.163.com/weapi/v1/resource/hotcomments/{CommentTypeTransformer(q["type"])}{q["id"]}", new ParameterInfo[] {
+		public static readonly CloudMusicApiProvider CommentHot = new CloudMusicApiProvider("/comment/hot", HttpMethod.Post, q => $"https://music.163.com/weapi/v1/resource/hotcomments/{MangleResourceId(q["type"], q["id"])}", new ParameterInfo[] {
 			new ParameterInfo("rid") { KeyForwarding = "id" },
 			new ParameterInfo("limit", ParameterType.Optional, 20),
 			new ParameterInfo("offset", ParameterType.Optional, 0),
@@ -246,9 +246,9 @@ namespace NeteaseCloudMusicApi {
 		/// <summary>
 		/// 给评论点赞
 		/// </summary>
-		public static readonly CloudMusicApiProvider CommentLike = new CloudMusicApiProvider("/comment/like", HttpMethod.Post, q => $"https://music.163.com/weapi/v1/comment/{(q["t"].ToString() == "1" ? "like" : "unlike")}", new ParameterInfo[] {
+		public static readonly CloudMusicApiProvider CommentLike = new CloudMusicApiProvider("/comment/like", HttpMethod.Post, q => $"https://music.163.com/weapi/v1/comment/{SelectOperation(q["t"], "unlike", "like")}", new ParameterInfo[] {
 			new ParameterInfo("commentId") { KeyForwarding = "cid" },
-			new ParameterInfo("threadId", ParameterType.Custom) { CustomHandler = q => q["type"].ToString() == "6" ? q["threadId"] : CommentTypeTransformer(q["type"]).ToString() + q["id"] }
+			new ParameterInfo("threadId", ParameterType.Custom) { CustomHandler = q => ToInteger(q["type"]) == 6 ? q["threadId"] : MangleResourceId(q["type"], q["id"]) }
 		}, BuildOptions("weapi", new Cookie[] { new Cookie("os", "pc") }));
 
 		/// <summary>
@@ -406,7 +406,7 @@ namespace NeteaseCloudMusicApi {
 		/// <summary>
 		/// 电台 - 订阅
 		/// </summary>
-		public static readonly CloudMusicApiProvider DjSub = new CloudMusicApiProvider("/dj/sub", HttpMethod.Post, q => $"https://music.163.com/weapi/djradio/{(q["t"].ToString() == "1" ? "sub" : "unsub")}", new ParameterInfo[] {
+		public static readonly CloudMusicApiProvider DjSub = new CloudMusicApiProvider("/dj/sub", HttpMethod.Post, q => $"https://music.163.com/weapi/djradio/{SelectOperation(q["t"], "unsub", "sub")}", new ParameterInfo[] {
 			new ParameterInfo("id") { KeyForwarding = "rid" }
 		}, BuildOptions("weapi"));
 
@@ -497,7 +497,7 @@ namespace NeteaseCloudMusicApi {
 		/// <summary>
 		/// 关注/取消关注用户
 		/// </summary>
-		public static readonly CloudMusicApiProvider Follow = new CloudMusicApiProvider("/follow", HttpMethod.Post, q => $"https://music.163.com/weapi/user/{(q["t"].ToString() == "1" ? "follow" : "delfollow")}/{q["id"]}", Array.Empty<ParameterInfo>(), BuildOptions("weapi", new Cookie[] { new Cookie("os", "pc") }));
+		public static readonly CloudMusicApiProvider Follow = new CloudMusicApiProvider("/follow", HttpMethod.Post, q => $"https://music.163.com/weapi/user/{SelectOperation(q["t"], "delfollow", "follow")}/{q["id"]}", Array.Empty<ParameterInfo>(), BuildOptions("weapi", new Cookie[] { new Cookie("os", "pc") }));
 
 		/// <summary>
 		/// 获取热门话题
@@ -651,7 +651,7 @@ namespace NeteaseCloudMusicApi {
 		/// <summary>
 		/// 收藏/取消收藏 MV
 		/// </summary>
-		public static readonly CloudMusicApiProvider MvSub = new CloudMusicApiProvider("/mv/sub", HttpMethod.Post, q => $"https://music.163.com/weapi/mv/{(q["t"].ToString() == "1" ? "sub" : "unsub")}", new ParameterInfo[] {
+		public static readonly CloudMusicApiProvider MvSub = new CloudMusicApiProvider("/mv/sub", HttpMethod.Post, q => $"https://music.163.com/weapi/mv/{SelectOperation(q["t"], "unsub", "sub")}", new ParameterInfo[] {
 			new ParameterInfo("mvId") { KeyForwarding = "mvid" },
 			new ParameterInfo("mvIds") { KeyForwarding = "mvid", Transformer = JsonArrayTransformer }
 		}, BuildOptions("weapi"));
@@ -762,7 +762,7 @@ namespace NeteaseCloudMusicApi {
 		/// <summary>
 		/// 收藏/取消收藏歌单
 		/// </summary>
-		public static readonly CloudMusicApiProvider PlaylistSubscribe = new CloudMusicApiProvider("/playlist/subscribe", HttpMethod.Post, q => $"https://music.163.com/weapi/playlist/{(q["t"].ToString() == "1" ? "subscribe" : "unsubscribe")}", new ParameterInfo[] {
+		public static readonly CloudMusicApiProvider PlaylistSubscribe = new CloudMusicApiProvider("/playlist/subscribe", HttpMethod.Post, q => $"https://music.163.com/weapi/playlist/{SelectOperation(q["t"], "unsubscribe", "subscribe")}", new ParameterInfo[] {
 			new ParameterInfo("id")
 		}, BuildOptions("weapi"));
 
@@ -869,8 +869,8 @@ namespace NeteaseCloudMusicApi {
 		/// <summary>
 		/// 资源点赞( MV,电台,视频)
 		/// </summary>
-		public static readonly CloudMusicApiProvider ResourceLike = new CloudMusicApiProvider("/resource/like", HttpMethod.Post, q => $"https://music.163.com/weapi/resource/{(q["t"].ToString() == "1" ? "like" : "unlike")}", new ParameterInfo[] {
-			new ParameterInfo("threadId", ParameterType.Custom) { CustomHandler = q => q["type"].ToString() == "6" ? q["threadId"] : ResourceTypeTransformer(q["type"]).ToString() + q["id"] }
+		public static readonly CloudMusicApiProvider ResourceLike = new CloudMusicApiProvider("/resource/like", HttpMethod.Post, q => $"https://music.163.com/weapi/resource/{SelectOperation(q["t"], "unlike", "like")}", new ParameterInfo[] {
+			new ParameterInfo("threadId", ParameterType.Custom) { CustomHandler = q => ToInteger(q["type"]) == 6 ? q["threadId"] : MangleResourceId(q["type"], q["id"]) }
 		}, BuildOptions("weapi", new Cookie[] { new Cookie("os", "pc") }));
 
 		/// <summary>
@@ -1012,8 +1012,7 @@ namespace NeteaseCloudMusicApi {
 		/// 获取歌曲详情
 		/// </summary>
 		public static readonly CloudMusicApiProvider SongDetail = new CloudMusicApiProvider("/song/detail", HttpMethod.Post, "https://music.163.com/weapi/v3/song/detail", new ParameterInfo[] {
-			new ParameterInfo("c") { KeyForwarding = "ids", Transformer = t => "[" + string.Join(",", t.ToString().Split(',').Select(m => "{\"id\":" + m.Trim() + "}")) + "]" },
-			new ParameterInfo("ids") { Transformer = JsonArrayTransformer }
+			new ParameterInfo("c") { KeyForwarding = "ids", Transformer = SongDetailCTransformer }
 		}, BuildOptions("weapi"));
 
 		/// <summary>
@@ -1240,7 +1239,7 @@ namespace NeteaseCloudMusicApi {
 		/// <summary>
 		/// 收藏视频
 		/// </summary>
-		public static readonly CloudMusicApiProvider VideoSub = new CloudMusicApiProvider("/video/sub", HttpMethod.Post, q => $"https://music.163.com/weapi/cloudvideo/video/{(q["t"].ToString() == "1" ? "sub" : "unsub")}", new ParameterInfo[] {
+		public static readonly CloudMusicApiProvider VideoSub = new CloudMusicApiProvider("/video/sub", HttpMethod.Post, q => $"https://music.163.com/weapi/cloudvideo/video/{SelectOperation(q["t"], "unsub", "sub")}", new ParameterInfo[] {
 			new ParameterInfo("id")
 		}, BuildOptions("weapi"));
 
@@ -1284,6 +1283,10 @@ namespace NeteaseCloudMusicApi {
 			return options;
 		}
 
+		private static object JsonArrayTransformer(object value) {
+			return $"[{FormatJsonIntegerArrayBody(value)}]";
+		}
+
 		private static object ArtistListInitialTransformer(object value) {
 			if (value is null)
 				return null;
@@ -1291,98 +1294,176 @@ namespace NeteaseCloudMusicApi {
 				return (int)char.ToUpperInvariant(s[0]);
 			if (value is char c)
 				return (int)char.ToUpperInvariant(c);
-			var typeCode = Type.GetTypeCode(value.GetType());
-			if (TypeCode.SByte <= typeCode && typeCode <= TypeCode.UInt64)
-				return value;
-			throw new ArgumentOutOfRangeException(nameof(value));
-		}
-
-		private static object JsonArrayTransformer(object value) {
-			return "[" + value is string s ? s.Replace(" ", string.Empty) : value + "]";
+			return ToInteger(value);
 		}
 
 		private static object BannerTypeTransformer(object type) {
-			switch (type.ToString()) {
-			case "0": return "pc";
-			case "1": return "android";
-			case "2": return "iphone";
-			case "3": return "ipad";
-			default: throw new ArgumentOutOfRangeException(nameof(type));
-			}
-		}
-
-		private static object CommentTypeTransformer(object type) {
-			switch (type.ToString()) {
-			case "0": return "R_SO_4_";  // 歌曲
-			case "1": return "R_MV_5_";  // MV
-			case "2": return "A_PL_0_";  // 歌单
-			case "3": return "R_AL_3_";  // 专辑
-			case "4": return "A_DJ_1_";  // 电台
-			case "5": return "R_VI_62_"; // 视频
-			case "6": return "A_EV_2_";  // 动态
+			switch (ToInteger(type)) {
+			case 0: return "pc";
+			case 1: return "android";
+			case 2: return "iphone";
+			case 3: return "ipad";
 			default: throw new ArgumentOutOfRangeException(nameof(type));
 			}
 		}
 
 		private static object DjToplistTypeTransformer(object type) {
-			switch (type.ToString()) {
-			case "new": return "0";
-			case "hot": return "1";
-			default:
-				throw new ArgumentOutOfRangeException(nameof(type));
-			}
-		}
-
-		private static object ResourceTypeTransformer(object type) {
-			switch (type.ToString()) {
-			case "1": return "R_MV_5_";  // MV
-			case "4": return "A_DJ_1_";  // 电台
-			case "5": return "R_VI_62_"; // 视频
-			case "6": return "A_EV_2_";  // 动态
+			switch (type.ToString().Trim().ToUpperInvariant()) {
+			case "new": return 0;
+			case "hot": return 1;
 			default: throw new ArgumentOutOfRangeException(nameof(type));
 			}
 		}
 
+		private static object SongDetailCTransformer(object value) {
+			return $"[{FormatJsonIntegerArrayBody(value)}]";
+
+			static string FormatJsonIntegerArrayBody(object array) {
+				if (array is null)
+					throw new ArgumentNullException(nameof(array));
+
+				if (array is string s)
+					return FormatJsonIntegerArrayBody(s.Split(','));
+				if (array is IEnumerable<int> i4s)
+					return FormatJsonIntegerArrayBody(i4s);
+				if (array is IEnumerable<long> i8s)
+					return FormatJsonIntegerArrayBody(i8s);
+				if (array is IEnumerable<uint> u4s)
+					return FormatJsonIntegerArrayBody(u4s);
+				if (array is IEnumerable<ulong> u8s)
+					return FormatJsonIntegerArrayBody(u8s);
+				if (array is IEnumerable<short> i2s)
+					return FormatJsonIntegerArrayBody(i2s);
+				if (array is IEnumerable<ushort> u2s)
+					return FormatJsonIntegerArrayBody(u2s);
+				if (array is IEnumerable<byte> u1s)
+					return FormatJsonIntegerArrayBody(u1s);
+				if (array is IEnumerable<sbyte> i1s)
+					return FormatJsonIntegerArrayBody(i1s);
+				if (array is IEnumerable<IConvertible> cs)
+					return FormatJsonIntegerArrayBody(cs.Select(t => t.ToInt64(null)));
+				throw new ArgumentOutOfRangeException(nameof(array));
+
+				static string FormatJsonIntegerArrayBody<T>(IEnumerable<T> a) {
+					return string.Join(",", a.Select(t => $"{{\"id\":{t}}}"));
+				}
+			}
+		}
+
 		private static object TopListIdTransformer(object idx) {
-			switch (idx.ToString()) {
-			case "0": return 3779629;     // 云音乐新歌榜
-			case "1": return 3778678;     // 云音乐热歌榜
-			case "2": return 2884035;     // 云音乐原创榜
-			case "3": return 19723756;    // 云音乐飙升榜
-			case "4": return 10520166;    // 云音乐电音榜
-			case "5": return 180106;      // UK排行榜周榜
-			case "6": return 60198;       // 美国Billboard周榜
-			case "7": return 21845217;    // KTV嗨榜
-			case "8": return 11641012;    // iTunes榜
-			case "9": return 120001;      // Hit FM Top榜
-			case "10": return 60131;      // 日本Oricon周榜
-			case "11": return 3733003;    // 韩国Melon排行榜周榜
-			case "12": return 60255;      // 韩国Mnet排行榜周榜
-			case "13": return 46772709;   // 韩国Melon原声周榜
-			case "14": return 112504;     // 中国TOP排行榜(港台榜)
-			case "15": return 64016;      // 中国TOP排行榜(内地榜)
-			case "16": return 10169002;   // 香港电台中文歌曲龙虎榜
-			case "17": return 4395559;    // 华语金曲榜
-			case "18": return 1899724;    // 中国嘻哈榜
-			case "19": return 27135204;   // 法国 NRJ EuroHot 30周榜
-			case "20": return 112463;     // 台湾Hito排行榜
-			case "21": return 3812895;    // Beatport全球电子舞曲榜
-			case "22": return 71385702;   // 云音乐ACG音乐榜
-			case "23": return 991319590;  // 云音乐说唱榜
-			case "24": return 71384707;   // 云音乐古典音乐榜
-			case "25": return 1978921795; // 云音乐电音榜
-			case "26": return 2250011882; // 抖音排行榜
-			case "27": return 2617766278; // 新声榜
-			case "28": return 745956260;  // 云音乐韩语榜
-			case "29": return 2023401535; // 英国Q杂志中文版周榜
-			case "30": return 2006508653; // 电竞音乐榜
-			case "31": return 2809513713; // 云音乐欧美热歌榜
-			case "32": return 2809577409; // 云音乐欧美新歌榜
-			case "33": return 2847251561; // 说唱TOP榜
-			case "34": return 3001835560; // 云音乐ACG动画榜
-			case "35": return 3001795926; // 云音乐ACG游戏榜
-			case "36": return 3001890046; // 云音乐ACG VOCALOID榜
+			switch (ToInteger(idx)) {
+			case 0: return 3779629;     // 云音乐新歌榜
+			case 1: return 3778678;     // 云音乐热歌榜
+			case 2: return 2884035;     // 云音乐原创榜
+			case 3: return 19723756;    // 云音乐飙升榜
+			case 4: return 10520166;    // 云音乐电音榜
+			case 5: return 180106;      // UK排行榜周榜
+			case 6: return 60198;       // 美国Billboard周榜
+			case 7: return 21845217;    // KTV嗨榜
+			case 8: return 11641012;    // iTunes榜
+			case 9: return 120001;      // Hit FM Top榜
+			case 10: return 60131;      // 日本Oricon周榜
+			case 11: return 3733003;    // 韩国Melon排行榜周榜
+			case 12: return 60255;      // 韩国Mnet排行榜周榜
+			case 13: return 46772709;   // 韩国Melon原声周榜
+			case 14: return 112504;     // 中国TOP排行榜(港台榜)
+			case 15: return 64016;      // 中国TOP排行榜(内地榜)
+			case 16: return 10169002;   // 香港电台中文歌曲龙虎榜
+			case 17: return 4395559;    // 华语金曲榜
+			case 18: return 1899724;    // 中国嘻哈榜
+			case 19: return 27135204;   // 法国 NRJ EuroHot 30周榜
+			case 20: return 112463;     // 台湾Hito排行榜
+			case 21: return 3812895;    // Beatport全球电子舞曲榜
+			case 22: return 71385702;   // 云音乐ACG音乐榜
+			case 23: return 991319590;  // 云音乐说唱榜
+			case 24: return 71384707;   // 云音乐古典音乐榜
+			case 25: return 1978921795; // 云音乐电音榜
+			case 26: return 2250011882; // 抖音排行榜
+			case 27: return 2617766278; // 新声榜
+			case 28: return 745956260;  // 云音乐韩语榜
+			case 29: return 2023401535; // 英国Q杂志中文版周榜
+			case 30: return 2006508653; // 电竞音乐榜
+			case 31: return 2809513713; // 云音乐欧美热歌榜
+			case 32: return 2809577409; // 云音乐欧美新歌榜
+			case 33: return 2847251561; // 说唱TOP榜
+			case 34: return 3001835560; // 云音乐ACG动画榜
+			case 35: return 3001795926; // 云音乐ACG游戏榜
+			case 36: return 3001890046; // 云音乐ACG VOCALOID榜
 			default: throw new ArgumentOutOfRangeException(nameof(idx));
+			}
+		}
+
+		private static string FormatJsonIntegerArrayBody(object array) {
+			if (array is null)
+				throw new ArgumentNullException(nameof(array));
+
+			if (array is string s)
+				return FormatJsonIntegerArrayBody(s.Split(','));
+			if (array is IEnumerable<int> i4s)
+				return FormatJsonIntegerArrayBody(i4s);
+			if (array is IEnumerable<long> i8s)
+				return FormatJsonIntegerArrayBody(i8s);
+			if (array is IEnumerable<uint> u4s)
+				return FormatJsonIntegerArrayBody(u4s);
+			if (array is IEnumerable<ulong> u8s)
+				return FormatJsonIntegerArrayBody(u8s);
+			if (array is IEnumerable<short> i2s)
+				return FormatJsonIntegerArrayBody(i2s);
+			if (array is IEnumerable<ushort> u2s)
+				return FormatJsonIntegerArrayBody(u2s);
+			if (array is IEnumerable<byte> u1s)
+				return FormatJsonIntegerArrayBody(u1s);
+			if (array is IEnumerable<sbyte> i1s)
+				return FormatJsonIntegerArrayBody(i1s);
+			if (array is IEnumerable<IConvertible> cs)
+				return FormatJsonIntegerArrayBody(cs.Select(t => t.ToInt64(null)));
+			throw new ArgumentOutOfRangeException(nameof(array));
+
+			static string FormatJsonIntegerArrayBody<T>(IEnumerable<T> a) {
+				return string.Join(",", a);
+			}
+		}
+
+		private static long ToInteger(object value) {
+			if (value is null)
+				throw new ArgumentNullException(nameof(value));
+
+			switch (Type.GetTypeCode(value.GetType())) {
+			case TypeCode.SByte: return (sbyte)value;
+			case TypeCode.Byte: return (byte)value;
+			case TypeCode.Int16: return (short)value;
+			case TypeCode.UInt16: return (ushort)value;
+			case TypeCode.Int32: return (int)value;
+			case TypeCode.UInt32: return (uint)value;
+			case TypeCode.Int64: return (long)value;
+			case TypeCode.UInt64: return checked((long)(ulong)value);
+			case TypeCode.String: return long.Parse((string)value);
+			}
+			if (value is IConvertible convertible)
+				return convertible.ToInt64(null);
+			throw new ArgumentOutOfRangeException(nameof(value));
+		}
+
+		private static string MangleResourceId(object type, object id) {
+			id = ToInteger(id).ToString();
+			switch (ToInteger(type)) {
+			case 0: return $"R_SO_4_{id}";  // 歌曲
+			case 1: return $"R_MV_5_{id}";  // MV
+			case 2: return $"A_PL_0_{id}";  // 歌单
+			case 3: return $"R_AL_3_{id}";  // 专辑
+			case 4: return $"A_DJ_1_{id}";  // 电台
+			case 5: return $"R_VI_62_{id}"; // 视频
+			case 6: return $"A_EV_2_{id}";  // 动态
+			default: throw new ArgumentOutOfRangeException(nameof(type));
+			}
+		}
+
+		private static string SelectOperation(object t, string zero, string one, string two = null) {
+			switch (ToInteger(t)) {
+			case 0: return zero;
+			case 1: return one;
+			case 2: return two ?? throw new ArgumentOutOfRangeException(nameof(t));
+			default: throw new ArgumentOutOfRangeException(nameof(t));
 			}
 		}
 	}
