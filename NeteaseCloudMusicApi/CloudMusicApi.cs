@@ -74,25 +74,44 @@ namespace NeteaseCloudMusicApi {
 		/// </summary>
 		/// <param name="provider">API提供者</param>
 		/// <param name="queries">参数</param>
+		/// <param name="throwIfFailed">如果请求失败，抛出异常</param>
 		/// <returns></returns>
-		public Task<(bool, JObject)> RequestAsync(CloudMusicApiProvider provider, Dictionary<string, object> queries = null) {
+		public async Task<JObject> RequestAsync(CloudMusicApiProvider provider, Dictionary<string, object> queries = null, bool throwIfFailed = true) {
 			if (provider is null)
 				throw new ArgumentNullException(nameof(provider));
 
 			if (queries is null)
 				queries = new Dictionary<string, object>();
+			JObject json;
 			if (provider == CloudMusicApiProviders.CheckMusic)
-				return HandleCheckMusicAsync(queries);
+				json = await HandleCheckMusicAsync(queries);
 			else if (provider == CloudMusicApiProviders.Login)
-				return HandleLoginAsync(queries);
+				json = await HandleLoginAsync(queries);
 			else if (provider == CloudMusicApiProviders.LoginStatus)
-				return HandleLoginStatusAsync();
+				json = await HandleLoginStatusAsync();
 			else if (provider == CloudMusicApiProviders.RelatedPlaylist)
-				return HandleRelatedPlaylistAsync(queries);
-			return RequestAsync(provider.Method, provider.Url(queries), provider.Data(queries), provider.Options);
+				json = await HandleRelatedPlaylistAsync(queries);
+			else
+				json = await RequestAsync(provider.Method, provider.Url(queries), provider.Data(queries), provider.Options);
+			if (throwIfFailed && !IsSuccess(json))
+				throw new HttpRequestException($"调用 '{provider.Route}' 失败");
+			return json;
 		}
 
-		private async Task<(bool, JObject)> RequestAsync(HttpMethod method, string url, Dictionary<string, object> data, Options options) {
+		/// <summary>
+		/// API是否请求成功
+		/// </summary>
+		/// <param name="json">服务器返回的数据</param>
+		/// <returns></returns>
+		public static bool IsSuccess(JObject json) {
+			if (json is null)
+				throw new ArgumentNullException(nameof(json));
+
+			int code = (int)json["code"];
+			return 200 <= code && code <= 299;
+		}
+
+		private async Task<JObject> RequestAsync(HttpMethod method, string url, Dictionary<string, object> data, Options options) {
 			if (method is null)
 				throw new ArgumentNullException(nameof(method));
 			if (url is null)
@@ -102,11 +121,10 @@ namespace NeteaseCloudMusicApi {
 			if (options is null)
 				throw new ArgumentNullException(nameof(options));
 
-			var (isOk, json) = await Request.CreateRequest(method.Method, url, data, MergeOptions(options), Cookies);
-			json = (JObject)json["body"];
-			if (!isOk && (int?)json["code"] == 301)
-				json["msg"] = "需要登录";
-			return (isOk, json);
+			var json = await Request.CreateRequest(method.Method, url, data, MergeOptions(options), Cookies);
+			if ((int)json["code"] == 301)
+				json["msg"] = "未登录";
+			return json;
 		}
 
 		private Options MergeOptions(Options options) {
@@ -124,35 +142,30 @@ namespace NeteaseCloudMusicApi {
 			return newOptions;
 		}
 
-		private async Task<(bool, JObject)> HandleCheckMusicAsync(Dictionary<string, object> queries) {
+		private async Task<JObject> HandleCheckMusicAsync(Dictionary<string, object> queries) {
 			var provider = CloudMusicApiProviders.CheckMusic;
-			var (isOk, json) = await RequestAsync(provider.Method, provider.Url(queries), provider.Data(queries), provider.Options);
-			if (!isOk)
-				return (false, null);
-			bool playable = (int?)json["code"] == 200 && (int?)json.SelectToken("data[0].code") == 200;
+			var json = await RequestAsync(provider.Method, provider.Url(queries), provider.Data(queries), provider.Options);
+			bool playable = (int)json["code"] == 200 && (int)json["data"][0]["code"] == 200;
 			var result = new JObject {
 				["success"] = playable,
 				["message"] = playable ? "ok" : "亲爱的,暂无版权"
 			};
-			return (true, result);
+			return result;
 		}
 
-		private async Task<(bool, JObject)> HandleLoginAsync(Dictionary<string, object> queries) {
+		private async Task<JObject> HandleLoginAsync(Dictionary<string, object> queries) {
 			var provider = CloudMusicApiProviders.Login;
-			var (isOk, json) = await RequestAsync(provider.Method, provider.Url(queries), provider.Data(queries), provider.Options);
-			if (!isOk)
-				return (false, null);
-			if ((int?)json["code"] == 502) {
+			var json = await RequestAsync(provider.Method, provider.Url(queries), provider.Data(queries), provider.Options);
+			if ((int)json["code"] == 502) {
 				json = new JObject {
-					["msg"] = "账号或密码错误",
 					["code"] = 502,
 					["message"] = "账号或密码错误"
 				};
 			}
-			return (isOk, json);
+			return json;
 		}
 
-		private async Task<(bool, JObject)> HandleLoginStatusAsync() {
+		private async Task<JObject> HandleLoginStatusAsync() {
 			try {
 				const string GUSER = "GUser=";
 				const string GBINDS = "GBinds=";
@@ -161,25 +174,25 @@ namespace NeteaseCloudMusicApi {
 				string s = Encoding.UTF8.GetString(data);
 				int index = s.IndexOf(GUSER, StringComparison.Ordinal);
 				if (index == -1)
-					return (false, new JObject { ["code"] = 301 });
+					return new JObject { ["code"] = 301 };
 				var json = new JObject { ["code"] = 200 };
 				using (var reader = new StringReader(s.Substring(index + GUSER.Length)))
 				using (var jsonReader = new JsonTextReader(reader))
 					json.Add("profile", JObject.Load(jsonReader));
 				index = s.IndexOf(GBINDS, StringComparison.Ordinal);
 				if (index == -1)
-					return (false, new JObject { ["code"] = 301 });
+					return new JObject { ["code"] = 301 };
 				using (var reader = new StringReader(s.Substring(index + GBINDS.Length)))
 				using (var jsonReader = new JsonTextReader(reader))
 					json.Add("bindings", JArray.Load(jsonReader));
-				return (true, json);
+				return json;
 			}
 			catch {
-				return (false, new JObject { ["code"] = 301 });
+				return new JObject { ["code"] = 301 };
 			}
 		}
 
-		private async Task<(bool, JObject)> HandleRelatedPlaylistAsync(Dictionary<string, object> queries) {
+		private async Task<JObject> HandleRelatedPlaylistAsync(Dictionary<string, object> queries) {
 			try {
 				byte[] data = await QuickHttp.SendAsync($"https://music.163.com/playlist?id={queries["id"]}", "Get", $"User-Agent: {Request.ChooseUserAgent("pc")}");
 				string s = Encoding.UTF8.GetString(data);
@@ -193,16 +206,16 @@ namespace NeteaseCloudMusicApi {
 					["name"] = match.Groups[3].Value,
 					["id"] = match.Groups[2].Value.Substring("/playlist?id=".Length),
 				}));
-				return (true, new JObject {
+				return new JObject {
 					["code"] = 200,
 					["playlists"] = playlists
-				});
+				};
 			}
 			catch (Exception ex) {
-				return (false, new JObject {
+				return new JObject {
 					["code"] = 500,
 					["msg"] = ex.ToFullString()
-				});
+				};
 			}
 		}
 	}

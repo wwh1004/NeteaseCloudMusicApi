@@ -47,7 +47,7 @@ namespace NeteaseCloudMusicApi.Utils {
 			}
 		}
 
-		public static async Task<(bool, JObject)> CreateRequest(string method, string url, Dictionary<string, object> data, Options options, CookieCollection setCookie) {
+		public static async Task<JObject> CreateRequest(string method, string url, Dictionary<string, object> data, Options options, CookieCollection setCookie) {
 			if (method is null)
 				throw new ArgumentNullException(nameof(method));
 			if (url is null)
@@ -119,40 +119,35 @@ namespace NeteaseCloudMusicApi.Utils {
 					UseProxy = options.UseProxy
 				};
 				if (options.UseProxy)
-                    handler.Proxy = options.Proxy;
-                using var client = new HttpClient(handler);
-                using var response = await client.SendAsync(url, method, headers, data2);
+					handler.Proxy = options.Proxy;
+				using var client = new HttpClient(handler);
+				using var response = await client.SendAsync(url, method, headers, data2);
 				response.EnsureSuccessStatusCode();
 				if (response.Headers.TryGetValues("Set-Cookie", out var rawSetCookie))
 					setCookie.Add(QuickHttp.ParseCookies(rawSetCookie));
-				string json;
-				if (options.Crypto == "eapi") {
-					try {
-						json = Encoding.UTF8.GetString(Crypto.Decrypt(await response.Content.ReadAsByteArrayAsync()));
-					}
-					catch {
-						json = await response.Content.ReadAsStringAsync();
-					}
+				bool isEApi = options.Crypto == "eapi";
+				byte[] buffer = await response.Content.ReadAsByteArrayAsync();
+				JObject json;
+				try {
+					if (isEApi && buffer[0] != 0x7B && buffer[1] != 0x22)
+						buffer = Crypto.Decrypt(buffer);
+					// response body前两个字符应该为{"，否则认为是加密的
+					json = JObject.Parse(Encoding.UTF8.GetString(buffer));
 				}
-				else {
-					json = await response.Content.ReadAsStringAsync();
+				catch when (isEApi) {
+					json = JObject.Parse(Encoding.UTF8.GetString(Crypto.Decrypt(buffer)));
 				}
-				var body = JObject.Parse(json);
-				int status = (int?)body["code"] ?? (int)response.StatusCode;
-				var answer = new JObject {
-					["status"] = status,
-					["body"] = body
-				};
-				return (status == 200, answer);
+				if (json["code"] is null) {
+					System.Diagnostics.Debug.Assert(true, "code不应为null");
+					json["code"] = (int)response.StatusCode;
+				}
+				return json;
 			}
 			catch (Exception ex) {
-				return (false, new JObject {
-					["status"] = 502,
-					["body"] = new JObject {
-						["code"] = 502,
-						["msg"] = ex.ToFullString()
-					}
-				});
+				return new JObject {
+					["code"] = 502,
+					["msg"] = ex.ToFullString()
+				};
 			}
 
 			static ulong GetCurrentTotalSeconds() {
